@@ -1,0 +1,11 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import eventsRoutes from './routes/events.routes.js';
+const app = express();
+app.use(helmet());
+app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
+app.use(express.json());
+app.use('/api/events', eventsRoutes);
+app.get('/', (req,res)=>res.json({success:true, message:'School API up'}));
+export default app;

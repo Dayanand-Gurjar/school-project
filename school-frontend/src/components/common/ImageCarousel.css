@@ -1,0 +1,158 @@
+.image-carousel {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.image-carousel__container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.image-carousel__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.image-carousel__placeholder {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+}
+
+.image-carousel__placeholder-icon {
+  font-size: var(--text-3xl);
+  color: white;
+}
+
+.image-carousel__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-700);
+  transition: all 0.2s ease;
+  opacity: 0;
+  visibility: hidden;
+  z-index: 2;
+}
+
+.image-carousel:hover .image-carousel__nav {
+  opacity: 1;
+  visibility: visible;
+}
+
+.image-carousel__nav:hover {
+  background: white;
+  color: var(--primary);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.image-carousel__nav--prev {
+  left: 8px;
+}
+
+.image-carousel__nav--next {
+  right: 8px;
+}
+
+.image-carousel__counter {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  z-index: 2;
+}
+
+.image-carousel__dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) 0;
+  margin-top: var(--spacing-2);
+}
+
+.image-carousel__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gray-300);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-carousel__dot:hover {
+  background: var(--gray-400);
+  transform: scale(1.2);
+}
+
+.image-carousel__dot--active {
+  background: var(--primary);
+  transform: scale(1.3);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .image-carousel__container {
+    height: 160px;
+  }
+  
+  .image-carousel__nav {
+    width: 28px;
+    height: 28px;
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  .image-carousel__nav--prev {
+    left: 4px;
+  }
+  
+  .image-carousel__nav--next {
+    right: 4px;
+  }
+  
+  .image-carousel__counter {
+    top: 4px;
+    right: 4px;
+  }
+}
+
+/* Animation for image transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.image-carousel__image {
+  animation: fadeIn 0.3s ease-out;
+}

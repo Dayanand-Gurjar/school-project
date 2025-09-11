@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import "./QuickLinks.css";
 
 export default function QuickLinks() {
   const quickLinks = [
@@ -34,142 +35,30 @@ export default function QuickLinks() {
   ];
 
   return (
-    <>
-      <section className="quicklinks">
-        <div className="container">
-          <div className="quicklinks__header">
-            <h2 className="quicklinks__title">Quick Access</h2>
-            <p className="quicklinks__subtitle">
-              Essential resources and tools for students, parents, and faculty
-            </p>
-          </div>
-          
-          <div className="quicklinks__grid">
-            {quickLinks.map((link, index) => (
-              <Link
-                key={index}
-                to={link.link}
-                className={`quicklinks__card quicklinks__card--${link.color}`}
-              >
-                <div className="quicklinks__icon">{link.icon}</div>
-                <h3 className="quicklinks__card-title">{link.title}</h3>
-                <p className="quicklinks__description">{link.description}</p>
-                <div className="quicklinks__arrow">→</div>
-              </Link>
-            ))}
-          </div>
+    <section className="quicklinks">
+      <div className="container">
+        <div className="quicklinks__header">
+          <h2 className="quicklinks__title">Quick Access</h2>
+          <p className="quicklinks__subtitle">
+            Essential resources and tools for students, parents, and faculty
+          </p>
         </div>
-      </section>
-
-      <style jsx>{`
-        .quicklinks {
-          padding: var(--spacing-20) 0;
-          background: var(--gray-900);
-          color: white;
-        }
-
-        .quicklinks__header {
-          text-align: center;
-          margin-bottom: var(--spacing-12);
-        }
-
-        .quicklinks__title {
-          color: white;
-          font-size: clamp(2rem, 4vw, 3rem);
-          margin-bottom: var(--spacing-4);
-        }
-
-        .quicklinks__subtitle {
-          color: var(--gray-300);
-          font-size: var(--text-lg);
-          max-width: 600px;
-          margin: 0 auto;
-        }
-
-        .quicklinks__grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: var(--spacing-6);
-        }
-
-        .quicklinks__card {
-          background: var(--gray-800);
-          border-radius: var(--radius-2xl);
-          padding: var(--spacing-6);
-          text-decoration: none;
-          color: white;
-          transition: all 0.3s ease;
-          border: 1px solid var(--gray-700);
-          position: relative;
-          overflow: hidden;
-        }
-
-        .quicklinks__card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-          color: white;
-        }
-
-        .quicklinks__card--primary:hover {
-          border-color: var(--primary);
-          box-shadow: 0 20px 40px rgba(30, 58, 138, 0.3);
-        }
-
-        .quicklinks__card--secondary:hover {
-          border-color: var(--secondary);
-          box-shadow: 0 20px 40px rgba(245, 158, 11, 0.3);
-        }
-
-        .quicklinks__card--accent:hover {
-          border-color: var(--accent);
-          box-shadow: 0 20px 40px rgba(16, 185, 129, 0.3);
-        }
-
-        .quicklinks__icon {
-          font-size: 2.5rem;
-          margin-bottom: var(--spacing-4);
-          display: block;
-        }
-
-        .quicklinks__card-title {
-          font-size: var(--text-xl);
-          font-weight: 700;
-          margin-bottom: var(--spacing-3);
-          color: white;
-        }
-
-        .quicklinks__description {
-          color: var(--gray-300);
-          margin-bottom: var(--spacing-4);
-          line-height: 1.5;
-        }
-
-        .quicklinks__arrow {
-          position: absolute;
-          top: var(--spacing-4);
-          right: var(--spacing-4);
-          font-size: var(--text-xl);
-          opacity: 0;
-          transform: translateX(-10px);
-          transition: all 0.3s ease;
-        }
-
-        .quicklinks__card:hover .quicklinks__arrow {
-          opacity: 1;
-          transform: translateX(0);
-        }
-
-        @media (max-width: 768px) {
-          .quicklinks {
-            padding: var(--spacing-16) 0;
-          }
-          
-          .quicklinks__grid {
-            grid-template-columns: 1fr;
-            gap: var(--spacing-4);
-          }
-        }
-      `}</style>
-    </>
+        
+        <div className="quicklinks__grid">
+          {quickLinks.map((link, index) => (
+            <Link
+              key={index}
+              to={link.link}
+              className={`quicklinks__card quicklinks__card--${link.color}`}
+            >
+              <div className="quicklinks__icon">{link.icon}</div>
+              <h3 className="quicklinks__card-title">{link.title}</h3>
+              <p className="quicklinks__description">{link.description}</p>
+              <div className="quicklinks__arrow">→</div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

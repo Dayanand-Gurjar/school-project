@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ImageCarousel.css';
 
-export default function ImageCarousel({ images, alt = "Event image" }) {
+export default function ImageCarousel({ images, alt = "Event image", autoPlay = true, autoPlayInterval = 4000 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   if (!images || images.length === 0) {
     return (
@@ -12,12 +13,25 @@ export default function ImageCarousel({ images, alt = "Event image" }) {
     );
   }
 
+  // Auto-play functionality
+  useEffect(() => {
+    if (!autoPlay || images.length <= 1 || isHovered) return;
+
+    const timer = setInterval(() => {
+      setCurrentIndex((prevIndex) =>
+        prevIndex === images.length - 1 ? 0 : prevIndex + 1
+      );
+    }, autoPlayInterval);
+
+    return () => clearInterval(timer);
+  }, [autoPlay, autoPlayInterval, images.length, isHovered]);
+
   // If only one image, show it without carousel controls
   if (images.length === 1) {
     return (
       <div className="image-carousel">
-        <img 
-          src={images[0]} 
+        <img
+          src={images[0]}
           alt={alt}
           className="image-carousel__image"
         />
@@ -42,7 +56,11 @@ export default function ImageCarousel({ images, alt = "Event image" }) {
   };
 
   return (
-    <div className="image-carousel">
+    <div
+      className="image-carousel"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="image-carousel__container">
         <img 
           src={images[currentIndex]} 
@@ -71,9 +89,14 @@ export default function ImageCarousel({ images, alt = "Event image" }) {
           </svg>
         </button>
 
-        {/* Image counter */}
+        {/* Image counter with play/pause indicator */}
         <div className="image-carousel__counter">
           {currentIndex + 1} / {images.length}
+          {autoPlay && images.length > 1 && (
+            <span className="image-carousel__play-indicator">
+              {isHovered ? '⏸️' : '▶️'}
+            </span>
+          )}
         </div>
       </div>
 

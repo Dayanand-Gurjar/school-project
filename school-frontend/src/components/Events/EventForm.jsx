@@ -14,6 +14,15 @@ export default function EventForm({ onEventCreated }) {
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
+      // Check file sizes (10MB limit per file)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      const oversizedFiles = files.filter(file => file.size > maxSize);
+      
+      if (oversizedFiles.length > 0) {
+        alert(`Some files are too large. Maximum file size is 10MB per image. Please select smaller files.`);
+        return;
+      }
+      
       // Limit to 5 images
       const selectedFiles = files.slice(0, 5);
       setImages(selectedFiles);
@@ -108,7 +117,7 @@ export default function EventForm({ onEventCreated }) {
         <div className="event-form__image-section">
           <div className="event-form__image-header">
             <label htmlFor="image-input" className="event-form__image-label">
-              Event Images (Optional - Up to 5 images)
+              Event Images (Optional - Up to 5 images, 10MB max per image)
             </label>
             {images.length > 0 && (
               <button

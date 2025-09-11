@@ -74,11 +74,8 @@ export default function Highlights() {
         </div>
 
         <div className="highlights__cta">
-          <Link to="/about" className="btn btn-primary btn-lg">
-            Learn More About Us
-          </Link>
-          <Link to="/contact" className="btn btn-outline btn-lg">
-            Schedule a Visit
+          <Link to="/academics" className="btn btn-primary btn-lg">
+            Explore Our Programs
           </Link>
         </div>
       </div>

@@ -26,7 +26,7 @@ export default function Hero() {
       subtitle: "Future-Ready Learning",
       description: "State-of-the-art facilities and modern teaching methods prepare students for tomorrow's challenges.",
       image: "/api/placeholder/1200/600",
-      cta: "Campus Tour"
+      cta: "View Gallery"
     }
   ];
 
@@ -84,7 +84,10 @@ export default function Hero() {
                     {slide.description}
                   </p>
                   <div className="hero__actions">
-                    <Link to="/about" className="btn btn-primary btn-lg">
+                    <Link
+                      to={slide.cta === "View Gallery" ? "/gallery" : "/academics"}
+                      className="btn btn-primary btn-lg"
+                    >
                       {slide.cta}
                     </Link>
                     <Link to="/contact" className="btn btn-outline btn-lg">

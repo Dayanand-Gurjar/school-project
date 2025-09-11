@@ -7,21 +7,11 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   const quickLinks = [
-    { name: "About Us", path: "/about" },
     { name: "Academics", path: "/academics" },
     { name: "Admissions", path: "/admissions" },
     { name: "Events", path: "/events" },
     { name: "Gallery", path: "/gallery" },
     { name: "Contact", path: "/contact" }
-  ];
-
-  const academicLinks = [
-    { name: "Primary School", path: "/academics/primary" },
-    { name: "Middle School", path: "/academics/middle" },
-    { name: "High School", path: "/academics/high" },
-    { name: "Curriculum", path: "/academics/curriculum" },
-    { name: "Facilities", path: "/facilities" },
-    { name: "Faculty", path: "/faculty" }
   ];
 
   const contactInfo = {
@@ -88,20 +78,6 @@ export default function Footer() {
                 <h3 className="footer__title">Quick Links</h3>
                 <ul className="footer__links">
                   {quickLinks.map((link) => (
-                    <li key={link.path}>
-                      <Link to={link.path} className="footer__link">
-                        {link.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Academic Programs */}
-              <div className="footer__section">
-                <h3 className="footer__title">Academic Programs</h3>
-                <ul className="footer__links">
-                  {academicLinks.map((link) => (
                     <li key={link.path}>
                       <Link to={link.path} className="footer__link">
                         {link.name}

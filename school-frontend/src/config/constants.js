@@ -34,7 +34,6 @@ export const THEME = {
 // Navigation Links
 export const NAV_LINKS = [
   { name: "Home", path: "/" },
-  { name: "About", path: "/about" },
   { name: "Academics", path: "/academics" },
   { name: "Events", path: "/events" },
   { name: "Gallery", path: "/gallery" },

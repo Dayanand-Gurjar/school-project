@@ -28,8 +28,8 @@ export default function QuickLinks() {
     {
       icon: "🏫",
       title: "Campus Tour",
-      description: "Explore our facilities",
-      link: "/campus-tour",
+      description: "Explore our facilities through photos",
+      link: "/gallery",
       color: "primary"
     }
   ];

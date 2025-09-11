@@ -1,0 +1,130 @@
+.contact-page {
+  min-height: 100vh;
+  background: var(--bg-color);
+  padding: var(--spacing-8) 0;
+}
+
+.contact-header {
+  text-align: center;
+  margin-bottom: var(--spacing-10);
+}
+
+.contact-header h1 {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: var(--spacing-3);
+}
+
+.contact-header p {
+  font-size: var(--text-lg);
+  color: var(--text-muted);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.contact-content {
+  margin-bottom: var(--spacing-10);
+}
+
+/* Contact Information Cards */
+.contact-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-6);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.contact-card {
+  background: white;
+  padding: var(--spacing-6);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.contact-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.contact-card h2 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: var(--spacing-3);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.contact-card p {
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.contact-card strong {
+  color: var(--text-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .contact-page {
+    padding: var(--spacing-6) 0;
+  }
+
+  .contact-header h1 {
+    font-size: var(--text-2xl);
+  }
+
+  .contact-header p {
+    font-size: var(--text-base);
+  }
+
+  .contact-content {
+    gap: var(--spacing-6);
+  }
+
+  .contact-info {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+  }
+
+  .contact-card {
+    padding: var(--spacing-6);
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-card {
+    padding: var(--spacing-4);
+  }
+
+  .contact-card h2 {
+    font-size: var(--text-base);
+  }
+}
+
+/* Simple animations */
+.contact-card {
+  animation: fadeIn 0.6s ease forwards;
+}
+
+.contact-card:nth-child(1) { animation-delay: 0.1s; }
+.contact-card:nth-child(2) { animation-delay: 0.2s; }
+.contact-card:nth-child(3) { animation-delay: 0.3s; }
+.contact-card:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

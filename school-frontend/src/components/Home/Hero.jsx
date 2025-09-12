@@ -11,22 +11,25 @@ export default function Hero() {
       title: `Welcome to ${SCHOOL_NAME}`,
       subtitle: "Nurturing Excellence Since 1990",
       description: "Empowering students with knowledge, character, and leadership skills for a brighter tomorrow.",
-      image: "/api/placeholder/1200/600",
-      cta: "Explore Programs"
+      image: "/assets/photo1.jpeg",
+      cta: "Explore Programs",
+      themeColor: "primary"
     },
     {
       title: "Academic Excellence",
       subtitle: "World-Class Education",
       description: "Our comprehensive curriculum and expert faculty ensure students reach their full potential.",
-      image: "/api/placeholder/1200/600",
-      cta: "View Academics"
+      image: "/assets/photo2.jpeg",
+      cta: "View Academics",
+      themeColor: "secondary"
     },
     {
       title: "Innovation & Technology",
       subtitle: "Future-Ready Learning",
       description: "State-of-the-art facilities and modern teaching methods prepare students for tomorrow's challenges.",
-      image: "/api/placeholder/1200/600",
-      cta: "View Gallery"
+      image: "/assets/photo3.jpeg",
+      cta: "View Gallery",
+      themeColor: "accent"
     }
   ];
 
@@ -57,10 +60,11 @@ export default function Hero() {
         {heroSlides.map((slide, index) => (
           <div
             key={index}
-            className={`hero__slide ${index === currentSlide ? 'hero__slide--active' : ''}`}
+            className={`hero__slide hero__slide--${slide.themeColor} ${index === currentSlide ? 'hero__slide--active' : ''}`}
           >
             <div className="hero__background">
-              <div className="hero__overlay"></div>
+              <div className={`hero__overlay hero__overlay--${slide.themeColor}`}></div>
+              <div className="hero__blend-layer"></div>
               <img
                 src={slide.image}
                 alt={slide.title}

@@ -212,6 +212,103 @@ export const api = {
     } catch (error) {
       return [];
     }
+  },
+  // Add endpoints for fetching from students and teachers tables
+  getStudentsData: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/students`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data.success ? data.data : [];
+    } catch (error) {
+      return [];
+    }
+  },
+  getTeachersData: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/teachers`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data.success ? data.data : [];
+    } catch (error) {
+      return [];
+    }
+  },
+  
+  // Teacher-specific endpoints
+  getTeacherSchedule: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/teacher/schedule`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data.success ? data.data : [];
+    } catch (error) {
+      console.error('Error fetching teacher schedule:', error);
+      return [];
+    }
+  },
+  
+  getTeacherLeaveRequests: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/teacher/leave-requests`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data.success ? data.data : [];
+    } catch (error) {
+      console.error('Error fetching teacher leave requests:', error);
+      return [];
+    }
+  },
+  
+  submitTeacherLeaveRequest: async (leaveData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/teacher/leave-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(leaveData)
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error submitting leave request:', error);
+      return { success: false, error: 'Network error' };
+    }
+  },
+  
+  getTeacherStudents: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/teacher/students`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data.success ? data.data : [];
+    } catch (error) {
+      console.error('Error fetching teacher students:', error);
+      return [];
+    }
   }
 };
 

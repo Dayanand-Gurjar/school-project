@@ -2114,3 +2114,54 @@
     width: 100%;
   }
 }
+
+
+/* Schedule Organization Styles */
+.schedules-by-class,
+.schedules-by-teacher {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.class-schedule-group,
+.teacher-schedule-group {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.class-schedule-group .schedule-grid,
+.teacher-schedule-group .schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+/* Mobile responsiveness for schedule organization */
+@media (max-width: 768px) {
+  .schedules-by-class,
+  .schedules-by-teacher {
+    gap: 1rem;
+  }
+
+  .class-schedule-group .schedule-grid,
+  .teacher-schedule-group .schedule-grid {
+    grid-template-columns: 1fr;
+    padding: 0.75rem;
+  }
+
+  .class-schedule-group h5,
+  .teacher-schedule-group h5 {
+    font-size: 0.875rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .class-schedule-group .schedule-grid,
+  .teacher-schedule-group .schedule-grid {
+    padding: 0.5rem;
+  }
+}

@@ -3,6 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import eventsRoutes from './routes/events.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import studentsRoutes from './routes/students.routes.js';
+import teachersRoutes from './routes/teachers.routes.js';
+import teacherRoutes from './routes/teacher.routes.js';
 
 const app = express();
 
@@ -28,6 +31,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventsRoutes);
+app.use('/api/students', studentsRoutes);
+app.use('/api/teachers', teachersRoutes);
+app.use('/api/teacher', teacherRoutes);
 
 // Health check
 app.get('/', (req, res) => {

@@ -25,23 +25,15 @@ export default function TeacherDashboard() {
 
   const fetchTeacherData = async () => {
     try {
-      const [scheduleRes, leaveRes, studentsRes] = await Promise.all([
-        api.get('/teacher/schedule'),
-        api.get('/teacher/leave-requests'),
-        api.get('/teacher/students')
+      const [scheduleData, leaveData, studentsData] = await Promise.all([
+        api.getTeacherSchedule(),
+        api.getTeacherLeaveRequests(),
+        api.getTeacherStudents()
       ]);
 
-      if (scheduleRes.data.success) {
-        setSchedule(scheduleRes.data.data);
-      }
-
-      if (leaveRes.data.success) {
-        setLeaveRequests(leaveRes.data.data);
-      }
-
-      if (studentsRes.data.success) {
-        setStudents(studentsRes.data.data);
-      }
+      setSchedule(scheduleData);
+      setLeaveRequests(leaveData);
+      setStudents(studentsData);
     } catch (error) {
       console.error('Error fetching teacher data:', error);
     } finally {
@@ -52,9 +44,9 @@ export default function TeacherDashboard() {
   const handleLeaveSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/teacher/leave-request', leaveForm);
-      if (response.data.success) {
-        setLeaveRequests(prev => [response.data.data, ...prev]);
+      const response = await api.submitTeacherLeaveRequest(leaveForm);
+      if (response.success) {
+        setLeaveRequests(prev => [response.data, ...prev]);
         setLeaveForm({
           startDate: '',
           endDate: '',
@@ -62,6 +54,8 @@ export default function TeacherDashboard() {
           type: 'sick'
         });
         alert('Leave request submitted successfully!');
+      } else {
+        alert('Error submitting leave request: ' + (response.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error submitting leave request:', error);

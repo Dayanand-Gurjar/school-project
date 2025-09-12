@@ -5,7 +5,7 @@ import EventForm from '../Events/EventForm';
 import './Dashboard.css';
 
 // Schedule Form Component
-const ScheduleForm = ({ schedule, onSave, onCancel }) => {
+const ScheduleForm = ({ schedule, onSave, onCancel, availableGrades, availableSubjects, approvedTeachers }) => {
   const [formData, setFormData] = useState({
     grade: schedule?.grade || '',
     section: schedule?.section || 'A',
@@ -44,12 +44,7 @@ const ScheduleForm = ({ schedule, onSave, onCancel }) => {
   };
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const grades = ['9', '10', '11', '12'];
   const sections = ['A', 'B', 'C', 'D'];
-  const subjects = [
-    'Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology',
-    'History', 'Geography', 'Computer Science', 'Physical Education', 'Art', 'Music'
-  ];
 
   return (
     <form onSubmit={handleSubmit} className="schedule-form">
@@ -65,7 +60,7 @@ const ScheduleForm = ({ schedule, onSave, onCancel }) => {
               required
             >
               <option value="">Select Grade</option>
-              {grades.map(grade => (
+              {availableGrades.map(grade => (
                 <option key={grade} value={grade}>Grade {grade}</option>
               ))}
             </select>
@@ -97,22 +92,27 @@ const ScheduleForm = ({ schedule, onSave, onCancel }) => {
               required
             >
               <option value="">Select Subject</option>
-              {subjects.map(subject => (
+              {availableSubjects.map(subject => (
                 <option key={subject} value={subject}>{subject}</option>
               ))}
             </select>
           </div>
           <div className="form-group">
             <label htmlFor="teacher">Teacher *</label>
-            <input
-              type="text"
+            <select
               id="teacher"
               name="teacher"
               value={formData.teacher}
               onChange={handleInputChange}
-              placeholder="Enter teacher name"
               required
-            />
+            >
+              <option value="">Select Teacher</option>
+              {approvedTeachers.map(teacher => (
+                <option key={teacher.id} value={teacher.name}>
+                  {teacher.name} {teacher.subject ? `(${teacher.subject})` : ''}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -126,6 +126,7 @@ const ScheduleForm = ({ schedule, onSave, onCancel }) => {
               onChange={handleInputChange}
               required
             >
+              <option value="All Days">All Days (Monday to Saturday)</option>
               {days.map(day => (
                 <option key={day} value={day}>{day}</option>
               ))}
@@ -206,15 +207,61 @@ export default function AdminDashboard() {
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [selectedGrade, setSelectedGrade] = useState('all');
-  const [scheduleView, setScheduleView] = useState('overview'); // 'overview', 'create', 'list'
+  const [scheduleView, setScheduleView] = useState('overview'); // 'overview', 'create', 'list', 'classwise', 'teacherwise'
+  const [availableGrades, setAvailableGrades] = useState([]);
+  const [availableSubjects, setAvailableSubjects] = useState([]);
+  const [approvedTeachers, setApprovedTeachers] = useState([]);
+  const [scheduleViewType, setScheduleViewType] = useState('classwise'); // 'classwise' or 'teacherwise'
+  const [selectedDay, setSelectedDay] = useState('Monday'); // For schedule organization day filter
 
   useEffect(() => {
     fetchDashboardData();
     loadScheduleData();
+    fetchAvailableData();
   }, []);
 
-  // Sample schedule data - replace with API calls later
+  // Fetch available grades, subjects, and approved teachers
+  const fetchAvailableData = async () => {
+    try {
+      // Fetch teachers from teachers table
+      const teachersData = await api.getTeachersData();
+      setApprovedTeachers(teachersData);
+
+      // Get available classes/grades from students table
+      const studentsData = await api.getStudentsData();
+      const classes = [...new Set(studentsData.map(student => student.class).filter(Boolean))];
+      setAvailableGrades(classes.sort());
+
+      // Get available subjects from teachers table
+      const subjects = [...new Set(teachersData.map(teacher => teacher.subject).filter(Boolean))];
+      // Add some common subjects if not enough from database
+      const commonSubjects = [
+        'Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology',
+        'History', 'Geography', 'Computer Science', 'Physical Education', 'Art', 'Music'
+      ];
+      const allSubjects = [...new Set([...subjects, ...commonSubjects])];
+      setAvailableSubjects(allSubjects);
+
+      console.log('📚 Available data fetched:', {
+        teachers: teachersData.length,
+        classes: classes.length,
+        subjects: allSubjects.length
+      });
+    } catch (error) {
+      console.error('❌ Error fetching available data:', error);
+      
+      // Fallback data if API calls fail
+      setAvailableGrades(['9', '10', '11', '12']);
+      setAvailableSubjects([
+        'Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology',
+        'History', 'Geography', 'Computer Science', 'Physical Education', 'Art', 'Music'
+      ]);
+    }
+  };
+
+  // Load schedule data - replace with real API call later
   const loadScheduleData = () => {
+    // For now, using sample data - replace with actual API call
     const sampleSchedules = [
       {
         id: 1,
@@ -266,14 +313,29 @@ export default function AdminDashboard() {
 
   // Schedule Management Functions
   const handleCreateSchedule = (scheduleData) => {
-    const newSchedule = {
-      id: schedules.length + 1,
-      ...scheduleData
-    };
-    setSchedules(prev => [...prev, newSchedule]);
-    setShowScheduleForm(false);
-    setEditingSchedule(null);
-    alert('✅ Schedule created successfully!');
+    if (scheduleData.day === 'All Days') {
+      // Create schedule for all days
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const newSchedules = days.map((day, index) => ({
+        id: schedules.length + index + 1,
+        ...scheduleData,
+        day: day
+      }));
+      setSchedules(prev => [...prev, ...newSchedules]);
+      setShowScheduleForm(false);
+      setEditingSchedule(null);
+      alert(`✅ Schedule created successfully for all days (${days.length} schedules)!`);
+    } else {
+      // Create schedule for single day
+      const newSchedule = {
+        id: schedules.length + 1,
+        ...scheduleData
+      };
+      setSchedules(prev => [...prev, newSchedule]);
+      setShowScheduleForm(false);
+      setEditingSchedule(null);
+      alert('✅ Schedule created successfully!');
+    }
   };
 
   const handleUpdateSchedule = (scheduleData) => {
@@ -314,6 +376,35 @@ export default function AdminDashboard() {
       totalSubjects: subjects.length,
       totalTeachersAssigned: teachers.length
     };
+  };
+
+  // Get schedules organized by class for selected day
+  const getSchedulesByClass = (day = selectedDay) => {
+    const schedulesByClass = {};
+    schedules
+      .filter(schedule => schedule.day === day)
+      .forEach(schedule => {
+        const classKey = `Grade ${schedule.grade} - Section ${schedule.section}`;
+        if (!schedulesByClass[classKey]) {
+          schedulesByClass[classKey] = [];
+        }
+        schedulesByClass[classKey].push(schedule);
+      });
+    return schedulesByClass;
+  };
+
+  // Get schedules organized by teacher for selected day
+  const getSchedulesByTeacher = (day = selectedDay) => {
+    const schedulesByTeacher = {};
+    schedules
+      .filter(schedule => schedule.day === day)
+      .forEach(schedule => {
+        if (!schedulesByTeacher[schedule.teacher]) {
+          schedulesByTeacher[schedule.teacher] = [];
+        }
+        schedulesByTeacher[schedule.teacher].push(schedule);
+      });
+    return schedulesByTeacher;
   };
 
   const fetchDashboardData = async () => {
@@ -623,41 +714,188 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            {/* Recent Schedules Preview */}
+            {/* Schedule Organization - Class-wise and Teacher-wise */}
             {schedules.length > 0 && (
               <div className="recent-schedules">
-                <h4>Recent Schedules ({schedules.slice(0, 6).length} of {schedules.length})</h4>
-                <div className="schedule-grid">
-                  {schedules.slice(0, 6).map(schedule => (
-                    <div key={schedule.id} className="schedule-card">
-                      <div className="schedule-header">
-                        <span className="schedule-grade">Grade {schedule.grade}</span>
-                        <span className="schedule-section">Section {schedule.section}</span>
-                      </div>
-                      <div className="schedule-content">
-                        <h5>{schedule.subject}</h5>
-                        <p className="schedule-teacher">👨‍🏫 {schedule.teacher}</p>
-                        <p className="schedule-time">🕒 {schedule.startTime} - {schedule.endTime}</p>
-                        <p className="schedule-room">🏫 {schedule.room}</p>
-                        <span className="schedule-day">{schedule.day}</span>
-                      </div>
-                      <div className="schedule-actions-small">
-                        <button
-                          onClick={() => handleEditSchedule(schedule)}
-                          className="btn-edit btn-small"
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSchedule(schedule.id)}
-                          className="btn-delete btn-small"
-                        >
-                          🗑️ Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <h4 style={{ margin: 0 }}>Schedule Organization</h4>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <select
+                      value={selectedDay}
+                      onChange={(e) => setSelectedDay(e.target.value)}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '6px',
+                        fontSize: '0.875rem',
+                        background: 'white'
+                      }}
+                    >
+                      {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
+                        <option key={day} value={day}>{day}</option>
+                      ))}
+                    </select>
+                    <button
+                      className={`btn-small ${scheduleViewType === 'classwise' ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setScheduleViewType('classwise')}
+                    >
+                      📚 Class-wise
+                    </button>
+                    <button
+                      className={`btn-small ${scheduleViewType === 'teacherwise' ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setScheduleViewType('teacherwise')}
+                    >
+                      👨‍🏫 Teacher-wise
+                    </button>
+                  </div>
                 </div>
+
+                {scheduleViewType === 'classwise' ? (
+                  <div className="schedules-by-class">
+                    {Object.keys(getSchedulesByClass()).length === 0 ? (
+                      <div style={{
+                        textAlign: 'center',
+                        padding: '2rem',
+                        color: '#6b7280',
+                        fontStyle: 'italic',
+                        background: '#f8fafc',
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb'
+                      }}>
+                        No classes scheduled for {selectedDay}
+                      </div>
+                    ) : (
+                      Object.entries(getSchedulesByClass()).map(([className, classSchedules]) => (
+                      <div key={className} className="class-schedule-group">
+                          <h5 style={{
+                            background: '#1e3a8a',
+                            color: 'white',
+                            padding: '0.75rem 1rem',
+                            borderRadius: '8px 8px 0 0',
+                            margin: '0',
+                            fontSize: '1rem',
+                            fontWeight: '600'
+                          }}>
+                            {className} - {selectedDay} ({classSchedules.length} classes)
+                          </h5>
+                        <div className="schedule-grid" style={{ marginTop: '0', border: '1px solid #e5e7eb', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '1rem' }}>
+                          {classSchedules.slice(0, 4).map(schedule => (
+                            <div key={schedule.id} className="schedule-card">
+                              <div className="schedule-content">
+                                <h5>{schedule.subject}</h5>
+                                <p className="schedule-teacher">👨‍🏫 {schedule.teacher}</p>
+                                <p className="schedule-time">🕒 {schedule.startTime} - {schedule.endTime}</p>
+                                <p className="schedule-room">🏫 {schedule.room}</p>
+                                <span className="schedule-day">{schedule.day}</span>
+                              </div>
+                              <div className="schedule-actions-small">
+                                <button
+                                  onClick={() => handleEditSchedule(schedule)}
+                                  className="btn-edit btn-small"
+                                >
+                                  ✏️ Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSchedule(schedule.id)}
+                                  className="btn-delete btn-small"
+                                >
+                                  🗑️ Delete
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          {classSchedules.length > 4 && (
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#6b7280',
+                              fontStyle: 'italic',
+                              minHeight: '100px'
+                            }}>
+                              +{classSchedules.length - 4} more classes...
+                            </div>
+                          )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : (
+                  <div className="schedules-by-teacher">
+                    {Object.keys(getSchedulesByTeacher()).length === 0 ? (
+                      <div style={{
+                        textAlign: 'center',
+                        padding: '2rem',
+                        color: '#6b7280',
+                        fontStyle: 'italic',
+                        background: '#f8fafc',
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb'
+                      }}>
+                        No teachers scheduled for {selectedDay}
+                      </div>
+                    ) : (
+                      Object.entries(getSchedulesByTeacher()).map(([teacherName, teacherSchedules]) => (
+                      <div key={teacherName} className="teacher-schedule-group">
+                          <h5 style={{
+                            background: '#10b981',
+                            color: 'white',
+                            padding: '0.75rem 1rem',
+                            borderRadius: '8px 8px 0 0',
+                            margin: '0',
+                            fontSize: '1rem',
+                            fontWeight: '600'
+                          }}>
+                            👨‍🏫 {teacherName} - {selectedDay} ({teacherSchedules.length} classes)
+                          </h5>
+                        <div className="schedule-grid" style={{ marginTop: '0', border: '1px solid #e5e7eb', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '1rem' }}>
+                          {teacherSchedules.slice(0, 4).map(schedule => (
+                            <div key={schedule.id} className="schedule-card">
+                              <div className="schedule-header">
+                                <span className="schedule-grade">Grade {schedule.grade}</span>
+                                <span className="schedule-section">Section {schedule.section}</span>
+                              </div>
+                              <div className="schedule-content">
+                                <h5>{schedule.subject}</h5>
+                                <p className="schedule-time">🕒 {schedule.startTime} - {schedule.endTime}</p>
+                                <p className="schedule-room">🏫 {schedule.room}</p>
+                                <span className="schedule-day">{schedule.day}</span>
+                              </div>
+                              <div className="schedule-actions-small">
+                                <button
+                                  onClick={() => handleEditSchedule(schedule)}
+                                  className="btn-edit btn-small"
+                                >
+                                  ✏️ Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSchedule(schedule.id)}
+                                  className="btn-delete btn-small"
+                                >
+                                  🗑️ Delete
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          {teacherSchedules.length > 4 && (
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#6b7280',
+                              fontStyle: 'italic',
+                              minHeight: '100px'
+                            }}>
+                              +{teacherSchedules.length - 4} more classes...
+                            </div>
+                          )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -679,10 +917,9 @@ export default function AdminDashboard() {
                   className="grade-filter"
                 >
                   <option value="all">All Grades</option>
-                  <option value="9">Grade 9</option>
-                  <option value="10">Grade 10</option>
-                  <option value="11">Grade 11</option>
-                  <option value="12">Grade 12</option>
+                  {availableGrades.map(grade => (
+                    <option key={grade} value={grade}>Grade {grade}</option>
+                  ))}
                 </select>
               </div>
               <button
@@ -762,6 +999,9 @@ export default function AdminDashboard() {
                 setScheduleView('overview');
                 setEditingSchedule(null);
               }}
+              availableGrades={availableGrades}
+              availableSubjects={availableSubjects}
+              approvedTeachers={approvedTeachers}
             />
           </div>
         )}

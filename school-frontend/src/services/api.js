@@ -71,6 +71,150 @@ export async function updateEvent(id, event, adminSecret) {
   return data;
 }
 
+// Export api object for compatibility with existing imports
+export const api = {
+  fetchEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+  // Real authentication functions connecting to backend
+  login: async (credentials) => {
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials)
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Network error. Please check your connection and try again.'
+      };
+    }
+  },
+  register: async (userData) => {
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData)
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return { success: false, error: 'Network error. Please check your connection and try again.' };
+    }
+  },
+  getCurrentUser: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/auth/verify`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data.success ? data.user : null;
+    } catch (error) {
+      return null;
+    }
+  },
+  getStudents: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/auth/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data.success ? data.data.filter(user => user.role === 'student') : [];
+    } catch (error) {
+      return [];
+    }
+  },
+  getTeachers: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/auth/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data.success ? data.data.filter(user => user.role === 'teacher') : [];
+    } catch (error) {
+      return [];
+    }
+  },
+  getPendingUsers: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/auth/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data.success ? data.data.filter(user => user.status === 'pending') : [];
+    } catch (error) {
+      return [];
+    }
+  },
+  approveUser: async (userId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/auth/users/${userId}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return { success: false, error: 'Network error' };
+    }
+  },
+  rejectUser: async (userId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/auth/users/${userId}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return { success: false, error: 'Network error' };
+    }
+  },
+  getAllUsers: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/auth/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data.success ? data.data : [];
+    } catch (error) {
+      return [];
+    }
+  }
+};
+
 export async function deleteEvent(id, adminSecret) {
   const res = await fetch(`${API_BASE}/api/events/${id}`, {
     method: "DELETE",

@@ -170,6 +170,26 @@
   justify-content: center;
   font-size: var(--text-xs);
   font-weight: 600;
+.event-form__image-number.existing {
+  background: #059669;
+}
+
+.event-form__image-number.new {
+  background: #2563eb;
+}
+
+.event-form__existing-images,
+.event-form__new-images {
+  margin-top: 1rem;
+}
+
+.event-form__section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
 }
 
 .event-form__submit {

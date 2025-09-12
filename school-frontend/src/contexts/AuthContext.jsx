@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { api } from '../services/api';
+import { API_BASE } from '../config/constants';
 
 const AuthContext = createContext();
 
@@ -25,7 +26,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000'}/api/auth/verify`, {
+        const response = await fetch(`${API_BASE}/api/auth/verify`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

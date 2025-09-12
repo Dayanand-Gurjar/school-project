@@ -4,6 +4,185 @@ import { api, fetchEvents } from '../../services/api';
 import EventForm from '../Events/EventForm';
 import './Dashboard.css';
 
+// Schedule Form Component
+const ScheduleForm = ({ schedule, onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    grade: schedule?.grade || '',
+    section: schedule?.section || 'A',
+    subject: schedule?.subject || '',
+    teacher: schedule?.teacher || '',
+    day: schedule?.day || 'Monday',
+    startTime: schedule?.startTime || '',
+    endTime: schedule?.endTime || '',
+    room: schedule?.room || ''
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Validation
+    if (!formData.grade || !formData.subject || !formData.teacher || !formData.startTime || !formData.endTime || !formData.room) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    // Time validation
+    if (formData.startTime >= formData.endTime) {
+      alert('End time must be after start time');
+      return;
+    }
+
+    onSave(formData);
+  };
+
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const grades = ['9', '10', '11', '12'];
+  const sections = ['A', 'B', 'C', 'D'];
+  const subjects = [
+    'Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology',
+    'History', 'Geography', 'Computer Science', 'Physical Education', 'Art', 'Music'
+  ];
+
+  return (
+    <form onSubmit={handleSubmit} className="schedule-form">
+      <div className="form-grid">
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="grade">Grade *</label>
+            <select
+              id="grade"
+              name="grade"
+              value={formData.grade}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="">Select Grade</option>
+              {grades.map(grade => (
+                <option key={grade} value={grade}>Grade {grade}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="section">Section *</label>
+            <select
+              id="section"
+              name="section"
+              value={formData.section}
+              onChange={handleInputChange}
+              required
+            >
+              {sections.map(section => (
+                <option key={section} value={section}>Section {section}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="subject">Subject *</label>
+            <select
+              id="subject"
+              name="subject"
+              value={formData.subject}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="">Select Subject</option>
+              {subjects.map(subject => (
+                <option key={subject} value={subject}>{subject}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="teacher">Teacher *</label>
+            <input
+              type="text"
+              id="teacher"
+              name="teacher"
+              value={formData.teacher}
+              onChange={handleInputChange}
+              placeholder="Enter teacher name"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="day">Day *</label>
+            <select
+              id="day"
+              name="day"
+              value={formData.day}
+              onChange={handleInputChange}
+              required
+            >
+              {days.map(day => (
+                <option key={day} value={day}>{day}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="room">Room *</label>
+            <input
+              type="text"
+              id="room"
+              name="room"
+              value={formData.room}
+              onChange={handleInputChange}
+              placeholder="e.g. Room 101, Lab 301"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="startTime">Start Time *</label>
+            <input
+              type="time"
+              id="startTime"
+              name="startTime"
+              value={formData.startTime}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="endTime">End Time *</label>
+            <input
+              type="time"
+              id="endTime"
+              name="endTime"
+              value={formData.endTime}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="form-actions">
+        <button type="button" onClick={onCancel} className="btn-secondary">
+          Cancel
+        </button>
+        <button type="submit" className="btn-primary">
+          {schedule ? 'Update Schedule' : 'Create Schedule'}
+        </button>
+      </div>
+    </form>
+  );
+};
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
@@ -22,9 +201,120 @@ export default function AdminDashboard() {
   const [editingEvent, setEditingEvent] = useState(null);
   const [showAllEvents, setShowAllEvents] = useState(false);
 
+  // Schedule Management State
+  const [schedules, setSchedules] = useState([]);
+  const [showScheduleForm, setShowScheduleForm] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState(null);
+  const [selectedGrade, setSelectedGrade] = useState('all');
+  const [scheduleView, setScheduleView] = useState('overview'); // 'overview', 'create', 'list'
+
   useEffect(() => {
     fetchDashboardData();
+    loadScheduleData();
   }, []);
+
+  // Sample schedule data - replace with API calls later
+  const loadScheduleData = () => {
+    const sampleSchedules = [
+      {
+        id: 1,
+        grade: '9',
+        day: 'Monday',
+        startTime: '09:00',
+        endTime: '09:45',
+        subject: 'Mathematics',
+        teacher: 'Dr. Sarah Johnson',
+        room: 'Room 101',
+        section: 'A'
+      },
+      {
+        id: 2,
+        grade: '9',
+        day: 'Monday',
+        startTime: '09:45',
+        endTime: '10:30',
+        subject: 'English',
+        teacher: 'Prof. Michael Brown',
+        room: 'Room 205',
+        section: 'A'
+      },
+      {
+        id: 3,
+        grade: '10',
+        day: 'Monday',
+        startTime: '09:00',
+        endTime: '09:45',
+        subject: 'Physics',
+        teacher: 'Dr. Emily Davis',
+        room: 'Lab 301',
+        section: 'B'
+      },
+      {
+        id: 4,
+        grade: '9',
+        day: 'Tuesday',
+        startTime: '09:00',
+        endTime: '09:45',
+        subject: 'Science',
+        teacher: 'Dr. Robert Wilson',
+        room: 'Lab 201',
+        section: 'A'
+      }
+    ];
+    setSchedules(sampleSchedules);
+  };
+
+  // Schedule Management Functions
+  const handleCreateSchedule = (scheduleData) => {
+    const newSchedule = {
+      id: schedules.length + 1,
+      ...scheduleData
+    };
+    setSchedules(prev => [...prev, newSchedule]);
+    setShowScheduleForm(false);
+    setEditingSchedule(null);
+    alert('✅ Schedule created successfully!');
+  };
+
+  const handleUpdateSchedule = (scheduleData) => {
+    setSchedules(prev => prev.map(schedule =>
+      schedule.id === editingSchedule.id ? { ...schedule, ...scheduleData } : schedule
+    ));
+    setShowScheduleForm(false);
+    setEditingSchedule(null);
+    alert('✅ Schedule updated successfully!');
+  };
+
+  const handleDeleteSchedule = (scheduleId) => {
+    if (!confirm('Are you sure you want to delete this schedule? This action cannot be undone.')) {
+      return;
+    }
+    setSchedules(prev => prev.filter(schedule => schedule.id !== scheduleId));
+    alert('✅ Schedule deleted successfully!');
+  };
+
+  const handleEditSchedule = (schedule) => {
+    setEditingSchedule(schedule);
+    setShowScheduleForm(true);
+  };
+
+  const getFilteredSchedules = () => {
+    if (selectedGrade === 'all') return schedules;
+    return schedules.filter(schedule => schedule.grade === selectedGrade);
+  };
+
+  const getScheduleStats = () => {
+    const grades = [...new Set(schedules.map(s => s.grade))];
+    const subjects = [...new Set(schedules.map(s => s.subject))];
+    const teachers = [...new Set(schedules.map(s => s.teacher))];
+    
+    return {
+      totalSchedules: schedules.length,
+      totalGrades: grades.length,
+      totalSubjects: subjects.length,
+      totalTeachersAssigned: teachers.length
+    };
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -278,10 +568,203 @@ export default function AdminDashboard() {
 
     schedule: (
       <div className="schedule-section">
-        <h3>Class Schedule Management</h3>
-        <p>Manage class schedules and periods for all grades</p>
-        <button className="btn-primary">Create New Schedule</button>
-        {/* This will be expanded with schedule management components */}
+        <div className="section-header">
+          <h3>Class Schedule Management</h3>
+          <p>Create and manage class schedules for all grades and subjects</p>
+        </div>
+
+        {scheduleView === 'overview' && (
+          <div className="schedule-overview">
+            {/* Schedule Stats */}
+            <div className="schedule-stats">
+              <div className="stat-card">
+                <div className="stat-icon">📚</div>
+                <div className="stat-content">
+                  <h3>{getScheduleStats().totalSchedules}</h3>
+                  <p>Total Classes</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">🎓</div>
+                <div className="stat-content">
+                  <h3>{getScheduleStats().totalGrades}</h3>
+                  <p>Grades</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">📖</div>
+                <div className="stat-content">
+                  <h3>{getScheduleStats().totalSubjects}</h3>
+                  <p>Subjects</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">👨‍🏫</div>
+                <div className="stat-content">
+                  <h3>{getScheduleStats().totalTeachersAssigned}</h3>
+                  <p>Teachers Assigned</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="schedule-actions">
+              <button
+                className="btn-primary"
+                onClick={() => setScheduleView('create')}
+              >
+                + Create New Schedule
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => setScheduleView('list')}
+              >
+                View All Schedules
+              </button>
+            </div>
+
+            {/* Recent Schedules Preview */}
+            {schedules.length > 0 && (
+              <div className="recent-schedules">
+                <h4>Recent Schedules ({schedules.slice(0, 6).length} of {schedules.length})</h4>
+                <div className="schedule-grid">
+                  {schedules.slice(0, 6).map(schedule => (
+                    <div key={schedule.id} className="schedule-card">
+                      <div className="schedule-header">
+                        <span className="schedule-grade">Grade {schedule.grade}</span>
+                        <span className="schedule-section">Section {schedule.section}</span>
+                      </div>
+                      <div className="schedule-content">
+                        <h5>{schedule.subject}</h5>
+                        <p className="schedule-teacher">👨‍🏫 {schedule.teacher}</p>
+                        <p className="schedule-time">🕒 {schedule.startTime} - {schedule.endTime}</p>
+                        <p className="schedule-room">🏫 {schedule.room}</p>
+                        <span className="schedule-day">{schedule.day}</span>
+                      </div>
+                      <div className="schedule-actions-small">
+                        <button
+                          onClick={() => handleEditSchedule(schedule)}
+                          className="btn-edit btn-small"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSchedule(schedule.id)}
+                          className="btn-delete btn-small"
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {scheduleView === 'list' && (
+          <div className="schedule-list-view">
+            <div className="schedule-header-controls">
+              <button
+                className="btn-secondary"
+                onClick={() => setScheduleView('overview')}
+              >
+                ← Back to Overview
+              </button>
+              <div className="schedule-filters">
+                <select
+                  value={selectedGrade}
+                  onChange={(e) => setSelectedGrade(e.target.value)}
+                  className="grade-filter"
+                >
+                  <option value="all">All Grades</option>
+                  <option value="9">Grade 9</option>
+                  <option value="10">Grade 10</option>
+                  <option value="11">Grade 11</option>
+                  <option value="12">Grade 12</option>
+                </select>
+              </div>
+              <button
+                className="btn-primary"
+                onClick={() => setScheduleView('create')}
+              >
+                + Add Schedule
+              </button>
+            </div>
+
+            {getFilteredSchedules().length === 0 ? (
+              <div className="empty-state">
+                <p>No schedules found for the selected criteria</p>
+              </div>
+            ) : (
+              <div className="schedule-table">
+                <div className="schedule-table-header">
+                  <div>Grade</div>
+                  <div>Subject</div>
+                  <div>Teacher</div>
+                  <div>Day</div>
+                  <div>Time</div>
+                  <div>Room</div>
+                  <div>Actions</div>
+                </div>
+                {getFilteredSchedules().map(schedule => (
+                  <div key={schedule.id} className="schedule-table-row">
+                    <div className="grade-cell">
+                      <span className="grade-badge">Grade {schedule.grade}</span>
+                      <span className="section-badge">Sec {schedule.section}</span>
+                    </div>
+                    <div className="subject-cell">{schedule.subject}</div>
+                    <div className="teacher-cell">{schedule.teacher}</div>
+                    <div className="day-cell">{schedule.day}</div>
+                    <div className="time-cell">{schedule.startTime} - {schedule.endTime}</div>
+                    <div className="room-cell">{schedule.room}</div>
+                    <div className="actions-cell">
+                      <button
+                        onClick={() => handleEditSchedule(schedule)}
+                        className="btn-edit btn-small"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSchedule(schedule.id)}
+                        className="btn-delete btn-small"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {scheduleView === 'create' && (
+          <div className="schedule-form-container">
+            <div className="form-header">
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  setScheduleView('overview');
+                  setEditingSchedule(null);
+                }}
+              >
+                ← Back to Overview
+              </button>
+              <h4>{editingSchedule ? 'Edit Schedule' : 'Create New Schedule'}</h4>
+            </div>
+            
+            <ScheduleForm
+              schedule={editingSchedule}
+              onSave={editingSchedule ? handleUpdateSchedule : handleCreateSchedule}
+              onCancel={() => {
+                setScheduleView('overview');
+                setEditingSchedule(null);
+              }}
+            />
+          </div>
+        )}
       </div>
     ),
 

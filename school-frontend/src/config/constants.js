@@ -31,6 +31,46 @@ export const THEME = {
   }
 };
 
+// School Contact Information
+export const SCHOOL_CONTACT = {
+  address: {
+    street: "Udaipur street",
+    city: "Knowledge City",
+    state: "KC",
+    zipCode: "12345",
+    full: "Knowledge City, KC 12345"
+  },
+  phone: {
+    main: "+1 (555) 123-4567",
+    principal: "+1 (555) 123-4568",
+    admissions: "+1 (555) 123-4569"
+  },
+  email: {
+    general: "info@nscbschool.edu",
+    admissions: "admissions@nscbschool.edu",
+    principal: "principal@nscbschool.edu"
+  },
+  hours: {
+    classes: "Monday - Friday: 8:00 AM - 3:00 PM",
+    office: "Monday - Friday: 7:30 AM - 4:00 PM",
+    general: "Monday - Friday: 8:00 AM - 4:00 PM"
+  },
+  social: {
+    facebook: "#",
+    twitter: "#",
+    instagram: "#",
+    linkedin: "#"
+  }
+};
+
+// School Information
+export const SCHOOL_INFO = {
+  description: "Empowering students with knowledge, character, and leadership skills for over 30 years. Building tomorrow's leaders today.",
+  establishedYear: 1994,
+  motto: "Excellence in Education",
+  principalMessage: "Welcome to our school community where every student matters."
+};
+
 // Navigation Links
 export const NAV_LINKS = [
   { name: "Home", path: "/" },
@@ -39,3 +79,30 @@ export const NAV_LINKS = [
   { name: "Gallery", path: "/gallery" },
   { name: "Contact", path: "/contact" }
 ];
+
+// Quick Links for Footer
+export const QUICK_LINKS = [
+  { name: "Academics", path: "/academics" },
+  { name: "Admissions", path: "/admissions" },
+  { name: "Events", path: "/events" },
+  { name: "Gallery", path: "/gallery" },
+  { name: "Contact", path: "/contact" }
+];
+
+// Legal Links
+export const LEGAL_LINKS = [
+  { name: "Privacy Policy", path: "/privacy" },
+  { name: "Terms of Service", path: "/terms" },
+  { name: "Accessibility", path: "/accessibility" }
+];
+
+// User Messages
+export const USER_MESSAGES = {
+  auth: {
+    pendingApproval: "Your account is pending admin approval. Please contact the school administration.",
+    accountRejected: "Your account has been rejected. Please contact the school administration.",
+    rejectedInfo: "Your account application has been rejected. Please contact the school administration for more information.",
+    awaitingApproval: "Your account is awaiting admin approval. You will receive an email notification once your account has been reviewed and approved.",
+    registrationSuccess: "Your account has been created successfully. Please wait for admin approval before you can sign in. You will receive a confirmation email once your account is approved."
+  }
+};

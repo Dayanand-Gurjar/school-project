@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { USER_MESSAGES } from '../../config/constants';
 import './AuthPage.css';
 
 export default function RegisterPage() {
@@ -16,6 +17,8 @@ export default function RegisterPage() {
     subject: '', // for teachers
     employeeId: '' // for teachers
   });
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -27,6 +30,45 @@ export default function RegisterPage() {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file (PNG, JPG, JPEG, GIF)');
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File size must be less than 5MB');
+        return;
+      }
+      
+      setProfilePicture(file);
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfilePicturePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+      
+      // Clear any existing error
+      setError('');
+    }
+  };
+
+  const removeProfilePicture = () => {
+    setProfilePicture(null);
+    setProfilePicturePreview(null);
+    // Reset file input
+    const fileInput = document.getElementById('profilePicture');
+    if (fileInput) {
+      fileInput.value = '';
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -59,7 +101,20 @@ export default function RegisterPage() {
       return;
     }
 
-    const result = await register(formData);
+    // Create FormData for file upload
+    const submitData = new FormData();
+    
+    // Add all form fields
+    Object.keys(formData).forEach(key => {
+      submitData.append(key, formData[key]);
+    });
+    
+    // Add profile picture if selected
+    if (profilePicture) {
+      submitData.append('profilePicture', profilePicture);
+    }
+
+    const result = await register(submitData);
     
     if (result.success) {
       setSuccess(true);
@@ -90,9 +145,7 @@ export default function RegisterPage() {
               <div className="success-icon">✅</div>
               <h2>Registration Successful!</h2>
               <p>
-                Your account has been created successfully. Please wait for admin approval 
-                before you can sign in. You will receive a confirmation email once your 
-                account is approved.
+                {USER_MESSAGES.auth.registrationSuccess}
               </p>
               <Link to="/login" className="auth-btn primary">
                 Go to Login
@@ -155,6 +208,39 @@ export default function RegisterPage() {
             </div>
 
             {/* Personal Information */}
+            {/* Profile Picture Upload */}
+            <div className="form-group">
+              <label htmlFor="profilePicture">Profile Picture (Optional)</label>
+              <div className="photo-upload-container">
+                {profilePicturePreview ? (
+                  <div className="photo-preview">
+                    <img src={profilePicturePreview} alt="Profile Preview" />
+                    <button
+                      type="button"
+                      className="remove-photo-btn"
+                      onClick={removeProfilePicture}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div className="photo-upload-placeholder">
+                    <div className="upload-icon">📷</div>
+                    <p>Click to upload profile picture</p>
+                    <small>PNG, JPG, JPEG, GIF (Max 5MB)</small>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  id="profilePicture"
+                  name="profilePicture"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="photo-input"
+                />
+              </div>
+            </div>
+
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="firstName">First Name</label>

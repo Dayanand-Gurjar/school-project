@@ -203,20 +203,18 @@ export default function Navbar({ isDashboard = false }) {
           </div>
           
           {/* Mobile Navigation Links */}
-          {!isDashboard && (
-            <nav className="navbar__mobile-nav">
-              {NAV_LINKS.map((link, index) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`navbar__mobile-link ${isActiveLink(link.path) ? 'navbar__mobile-link--active' : ''}`}
-                  style={{ '--delay': `${index * 0.1}s` }}
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </nav>
-          )}
+          <nav className="navbar__mobile-nav">
+            {NAV_LINKS.map((link, index) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`navbar__mobile-link ${isActiveLink(link.path) ? 'navbar__mobile-link--active' : ''}`}
+                style={{ '--delay': `${index * 0.1}s` }}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </nav>
 
           {/* Mobile Auth/User Section */}
           <div className="navbar__mobile-auth">

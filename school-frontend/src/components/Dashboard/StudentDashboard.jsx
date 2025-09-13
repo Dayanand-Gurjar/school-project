@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
+import ProfileForm from '../Profile/ProfileForm';
 import './Dashboard.css';
 
 export default function StudentDashboard() {
@@ -235,6 +236,12 @@ export default function StudentDashboard() {
           </div>
         </div>
       </div>
+    ),
+
+    profile: (
+      <div className="profile-section">
+        <ProfileForm />
+      </div>
     )
   };
 
@@ -273,11 +280,17 @@ export default function StudentDashboard() {
         >
           ✅ Attendance
         </button>
-        <button 
+        <button
           className={`nav-tab ${activeTab === 'calendar' ? 'active' : ''}`}
           onClick={() => setActiveTab('calendar')}
         >
           📆 Calendar
+        </button>
+        <button
+          className={`nav-tab ${activeTab === 'profile' ? 'active' : ''}`}
+          onClick={() => setActiveTab('profile')}
+        >
+          👤 Profile
         </button>
       </div>
 

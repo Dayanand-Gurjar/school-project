@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { USER_MESSAGES } from '../../config/constants';
 import './AuthPage.css';
 
 export default function LoginPage() {
@@ -32,7 +33,7 @@ export default function LoginPage() {
       // Redirect based on user role
       const { role, status } = result.user;
       if (status === 'pending') {
-        setError('Your account is pending admin approval. Please contact the school administration.');
+        setError(USER_MESSAGES.auth.pendingApproval);
       } else if (status === 'approved') {
         switch (role) {
           case 'admin':
@@ -48,7 +49,7 @@ export default function LoginPage() {
             navigate('/');
         }
       } else {
-        setError('Your account has been rejected. Please contact the school administration.');
+        setError(USER_MESSAGES.auth.accountRejected);
       }
     } else {
       setError(result.error);

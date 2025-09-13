@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import NotificationBanner from "./components/Notifications/NotificationBanner";
 
 // Public Pages
 import HomePage from "./pages/HomePage";
@@ -38,6 +39,7 @@ function PublicLayout({ children }) {
   return (
     <div id="root">
       <Navbar />
+      <NotificationBanner />
       <main>
         {children}
       </main>

@@ -94,9 +94,21 @@ export const getTeacherSchedule = async (req, res) => {
       });
     }
 
+    // Transform database format to frontend format
+    const transformedSchedules = (schedules || []).map(schedule => ({
+      id: schedule.id,
+      day: schedule.day,
+      startTime: schedule.start_time,
+      endTime: schedule.end_time,
+      subject: schedule.subject,
+      grade: schedule.grade,
+      section: schedule.section,
+      room: schedule.room
+    }));
+
     res.json({
       success: true,
-      data: schedules || []
+      data: transformedSchedules
     });
 
   } catch (error) {
@@ -137,9 +149,22 @@ export const getTeacherLeaveRequests = async (req, res) => {
       });
     }
 
+    // Transform database format to frontend format
+    const transformedLeaveRequests = (leaveRequests || []).map(request => ({
+      id: request.id,
+      startDate: request.start_date,
+      endDate: request.end_date,
+      reason: request.reason,
+      type: request.type,
+      status: request.status,
+      createdAt: request.created_at,
+      approvedBy: request.approved_by,
+      approvedAt: request.approved_at
+    }));
+
     res.json({
       success: true,
-      data: leaveRequests || []
+      data: transformedLeaveRequests
     });
 
   } catch (error) {
@@ -164,7 +189,7 @@ export const submitLeaveRequest = async (req, res) => {
       });
     }
 
-    // Try to insert into leave_requests table
+    // Try to insert into leave_requests table with auto-approval
     const { data: leaveRequest, error } = await supabase
       .from('leave_requests')
       .insert([
@@ -175,7 +200,9 @@ export const submitLeaveRequest = async (req, res) => {
           end_date: endDate,
           reason: reason,
           type: type,
-          status: 'pending',
+          status: 'approved', // Auto-approve all teacher leave requests
+          approved_by: teacherId, // Self-approved
+          approved_at: new Date().toISOString(),
           created_at: new Date().toISOString()
         }
       ])
@@ -192,9 +219,9 @@ export const submitLeaveRequest = async (req, res) => {
           endDate,
           reason,
           type,
-          status: 'pending'
+          status: 'approved' // Auto-approved even in fallback
         },
-        message: 'Leave request submitted (leave_requests table not yet created - please create database table)'
+        message: 'Leave request submitted and auto-approved (leave_requests table not yet created - please create database table)'
       });
     }
 

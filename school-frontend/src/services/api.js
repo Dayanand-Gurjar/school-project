@@ -99,12 +99,23 @@ export const api = {
   },
   register: async (userData) => {
     try {
+      const headers = {};
+      let body;
+      
+      // Check if userData is FormData (for file uploads) or regular object
+      if (userData instanceof FormData) {
+        // Don't set Content-Type for FormData - browser will set it automatically with boundary
+        body = userData;
+      } else {
+        // Regular JSON data
+        headers['Content-Type'] = 'application/json';
+        body = JSON.stringify(userData);
+      }
+
       const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData)
+        headers,
+        body
       });
 
       const data = await response.json();
@@ -308,6 +319,112 @@ export const api = {
     } catch (error) {
       console.error('Error fetching teacher students:', error);
       return [];
+    }
+  },
+
+  // Admin Schedule Management endpoints
+  createSchedule: async (scheduleData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/admin/schedules`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(scheduleData)
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error creating schedule:', error);
+      return { success: false, error: 'Network error' };
+    }
+  },
+
+  getSchedules: async (filters = {}) => {
+    try {
+      const token = localStorage.getItem('token');
+      const queryParams = new URLSearchParams();
+      
+      if (filters.grade) queryParams.append('grade', filters.grade);
+      if (filters.day) queryParams.append('day', filters.day);
+      if (filters.teacher) queryParams.append('teacher', filters.teacher);
+      
+      const url = `${API_BASE}/api/admin/schedules${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data.success ? data.data : [];
+    } catch (error) {
+      console.error('Error fetching schedules:', error);
+      return [];
+    }
+  },
+
+  updateSchedule: async (scheduleId, scheduleData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/admin/schedules/${scheduleId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(scheduleData)
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error updating schedule:', error);
+      return { success: false, error: 'Network error' };
+    }
+  },
+
+  deleteSchedule: async (scheduleId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/admin/schedules/${scheduleId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      return { success: false, error: 'Network error' };
+    }
+  },
+
+  getScheduleStats: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/admin/schedules/stats`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data.success ? data.data : {
+        totalSchedules: 0,
+        totalGrades: 0,
+        totalSubjects: 0,
+        totalTeachersAssigned: 0
+      };
+    } catch (error) {
+      console.error('Error fetching schedule stats:', error);
+      return {
+        totalSchedules: 0,
+        totalGrades: 0,
+        totalSubjects: 0,
+        totalTeachersAssigned: 0
+      };
     }
   }
 };

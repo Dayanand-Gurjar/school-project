@@ -1,5 +1,5 @@
 import React from "react";
-import { SCHOOL_NAME } from "../config/constants";
+import { SCHOOL_NAME, SCHOOL_CONTACT } from "../config/constants";
 import "./ContactPage.css";
 
 export default function ContactPage() {
@@ -16,26 +16,26 @@ export default function ContactPage() {
           <div className="contact-info">
             <div className="contact-card">
               <h2>📍 Visit Us</h2>
-              <p>123 School Street<br />
-              Education City, EC 12345</p>
+              <p>{SCHOOL_CONTACT.address.street}<br />
+              {SCHOOL_CONTACT.address.city}, {SCHOOL_CONTACT.address.state} {SCHOOL_CONTACT.address.zipCode}</p>
             </div>
 
             <div className="contact-card">
               <h2>📞 Call Us</h2>
-              <p><strong>Main Office:</strong> (555) 123-4567<br />
-              <strong>Principal:</strong> (555) 123-4568</p>
+              <p><strong>Main Office:</strong> {SCHOOL_CONTACT.phone.main}<br />
+              <strong>Principal:</strong> {SCHOOL_CONTACT.phone.principal}</p>
             </div>
 
             <div className="contact-card">
               <h2>✉️ Email Us</h2>
-              <p><strong>General:</strong> info@nscbschool.edu<br />
-              <strong>Admissions:</strong> admissions@nscbschool.edu</p>
+              <p><strong>General:</strong> {SCHOOL_CONTACT.email.general}<br />
+              <strong>Admissions:</strong> {SCHOOL_CONTACT.email.admissions}</p>
             </div>
 
             <div className="contact-card">
               <h2>🕒 School Hours</h2>
-              <p><strong>Classes:</strong> Mon-Fri 8:00 AM - 3:00 PM<br />
-              <strong>Office:</strong> Mon-Fri 7:30 AM - 4:00 PM</p>
+              <p><strong>Classes:</strong> {SCHOOL_CONTACT.hours.classes}<br />
+              <strong>Office:</strong> {SCHOOL_CONTACT.hours.office}</p>
             </div>
           </div>
         </div>

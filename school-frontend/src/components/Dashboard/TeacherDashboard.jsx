@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
+import ProfileForm from '../Profile/ProfileForm';
 import './Dashboard.css';
 
 export default function TeacherDashboard() {
@@ -10,6 +11,17 @@ export default function TeacherDashboard() {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Students section state
+  const [selectedClass, setSelectedClass] = useState('all');
+  const [availableClasses, setAvailableClasses] = useState([]);
+  
+  // Day selector state for overview
+  const [selectedDay, setSelectedDay] = useState(() => {
+    // Default to today's day
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    return today;
+  });
 
   // Leave request form state
   const [leaveForm, setLeaveForm] = useState({
@@ -34,6 +46,10 @@ export default function TeacherDashboard() {
       setSchedule(scheduleData);
       setLeaveRequests(leaveData);
       setStudents(studentsData);
+      
+      // Extract unique classes from students data
+      const classes = [...new Set(studentsData.map(student => student.grade).filter(Boolean))];
+      setAvailableClasses(classes.sort());
     } catch (error) {
       console.error('Error fetching teacher data:', error);
     } finally {
@@ -43,6 +59,36 @@ export default function TeacherDashboard() {
 
   const handleLeaveSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation
+    if (!leaveForm.startDate || !leaveForm.endDate || !leaveForm.reason.trim()) {
+      alert('Please fill in all required fields (start date, end date, and reason)');
+      return;
+    }
+
+    // Date validation
+    const startDate = new Date(leaveForm.startDate);
+    const endDate = new Date(leaveForm.endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (startDate < today) {
+      alert('Start date cannot be in the past');
+      return;
+    }
+
+    if (endDate < startDate) {
+      alert('End date must be on or after start date');
+      return;
+    }
+
+    // Calculate date difference for validation
+    const daysDifference = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+    if (daysDifference > 30) {
+      alert('Leave request cannot exceed 30 days');
+      return;
+    }
+
     try {
       const response = await api.submitTeacherLeaveRequest(leaveForm);
       if (response.success) {
@@ -53,7 +99,7 @@ export default function TeacherDashboard() {
           reason: '',
           type: 'sick'
         });
-        alert('Leave request submitted successfully!');
+        alert('Leave request submitted and approved successfully!');
       } else {
         alert('Error submitting leave request: ' + (response.error || 'Unknown error'));
       }
@@ -68,36 +114,79 @@ export default function TeacherDashboard() {
     return schedule.filter(period => period.day === today);
   };
 
+  const getSelectedDaySchedule = () => {
+    return schedule.filter(period => period.day === selectedDay);
+  };
+
+  const isToday = (day) => {
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    return day === today;
+  };
+
   const tabContent = {
     overview: (
       <div className="dashboard-overview">
         <div className="welcome-section">
           <h2>Welcome, {user?.firstName}!</h2>
-          <p>Subject: {user?.subject} | Employee ID: {user?.employeeId}</p>
+          <p>Have a great day teaching!</p>
         </div>
 
-        <div className="today-schedule">
-          <h3>Today's Schedule</h3>
+        <div className="day-schedule-section">
+          <div className="schedule-header">
+            <h3>
+              {isToday(selectedDay) ? "Today's Schedule" : `${selectedDay}'s Schedule`}
+            </h3>
+            <div className="day-selector">
+              <select
+                value={selectedDay}
+                onChange={(e) => setSelectedDay(e.target.value)}
+                className="day-select"
+              >
+                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
+                  <option key={day} value={day}>
+                    {day} {isToday(day) ? '(Today)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
           <div className="schedule-grid">
-            {getCurrentDaySchedule().length > 0 ? (
-              getCurrentDaySchedule().map((period, index) => (
+            {getSelectedDaySchedule().length > 0 ? (
+              getSelectedDaySchedule()
+                .sort((a, b) => a.startTime.localeCompare(b.startTime)) // Sort by time
+                .map((period, index) => (
                 <div key={index} className="period-card">
                   <div className="period-time">
                     {period.startTime} - {period.endTime}
                   </div>
                   <div className="period-info">
                     <h4>{period.subject}</h4>
-                    <p>Grade {period.grade} - {period.section}</p>
-                    <span className="room">Room {period.room}</span>
+                    <p>Grade {period.grade} - Section {period.section}</p>
+                    <span className="room">🏫 {period.room}</span>
                   </div>
                 </div>
               ))
             ) : (
               <div className="empty-schedule">
-                <p>No classes scheduled for today</p>
+                <p>No classes scheduled for {selectedDay}</p>
+                {isToday(selectedDay) && <p>Enjoy your free day! 🎉</p>}
               </div>
             )}
           </div>
+          
+          {/* Show today's summary if different day is selected */}
+          {!isToday(selectedDay) && (
+            <div className="today-summary">
+              <h4>Today's Quick Summary:</h4>
+              <p>
+                {getCurrentDaySchedule().length > 0
+                  ? `${getCurrentDaySchedule().length} classes scheduled today`
+                  : 'No classes today'
+                }
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="quick-stats">
@@ -118,8 +207,8 @@ export default function TeacherDashboard() {
           <div className="stat-card">
             <div className="stat-icon">📝</div>
             <div className="stat-content">
-              <h3>{leaveRequests.filter(req => req.status === 'pending').length}</h3>
-              <p>Pending Leaves</p>
+              <h3>{leaveRequests.filter(req => req.status === 'approved').length}</h3>
+              <p>Approved Leaves</p>
             </div>
           </div>
         </div>
@@ -130,7 +219,7 @@ export default function TeacherDashboard() {
       <div className="schedule-section">
         <h3>Weekly Schedule</h3>
         <div className="weekly-schedule">
-          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(day => (
+          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
             <div key={day} className="day-schedule">
               <h4>{day}</h4>
               <div className="day-periods">
@@ -240,24 +329,71 @@ export default function TeacherDashboard() {
 
     students: (
       <div className="students-section">
-        <h3>My Students</h3>
-        <div className="students-grid">
-          {students.length > 0 ? (
-            students.map((student, index) => (
-              <div key={index} className="student-card">
-                <div className="student-info">
-                  <h4>{student.firstName} {student.lastName}</h4>
-                  <p>Grade {student.grade}</p>
-                  <p>{student.email}</p>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="empty-state">
-              <p>No students assigned</p>
-            </div>
-          )}
+        <div className="section-header">
+          <h3>My Students</h3>
+          <div className="class-selector">
+            <label htmlFor="classSelect">Select Class:</label>
+            <select
+              id="classSelect"
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              className="class-select"
+            >
+              <option value="all">All Classes</option>
+              {availableClasses.map(grade => (
+                <option key={grade} value={grade}>Grade {grade}</option>
+              ))}
+            </select>
+          </div>
         </div>
+        
+        <div className="students-display">
+          {(() => {
+            const filteredStudents = selectedClass === 'all'
+              ? students
+              : students.filter(student => student.grade === selectedClass);
+            
+            return filteredStudents.length > 0 ? (
+              <>
+                <div className="students-summary">
+                  <p>
+                    Showing {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}
+                    {selectedClass !== 'all' ? ` from Grade ${selectedClass}` : ' from all classes'}
+                  </p>
+                </div>
+                <div className="students-grid">
+                  {filteredStudents.map((student, index) => (
+                    <div key={index} className="student-card">
+                      <div className="student-info">
+                        <h4>{student.firstName} {student.lastName}</h4>
+                        <p className="student-grade">Grade {student.grade}</p>
+                        <p className="student-email">{student.email}</p>
+                      </div>
+                      <div className="student-actions">
+                        <span className="student-status">Active</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="empty-state">
+                <p>
+                  {selectedClass === 'all'
+                    ? 'No students assigned to you'
+                    : `No students found in Grade ${selectedClass}`
+                  }
+                </p>
+              </div>
+            );
+          })()}
+        </div>
+      </div>
+    ),
+
+    profile: (
+      <div className="profile-section">
+        <ProfileForm />
       </div>
     )
   };
@@ -297,11 +433,17 @@ export default function TeacherDashboard() {
         >
           📝 Leave Management
         </button>
-        <button 
+        <button
           className={`nav-tab ${activeTab === 'students' ? 'active' : ''}`}
           onClick={() => setActiveTab('students')}
         >
           👨‍🎓 My Students
+        </button>
+        <button
+          className={`nav-tab ${activeTab === 'profile' ? 'active' : ''}`}
+          onClick={() => setActiveTab('profile')}
+        >
+          👤 Profile
         </button>
       </div>
 

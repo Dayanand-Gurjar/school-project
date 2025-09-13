@@ -1,11 +1,19 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import eventsRoutes from './routes/events.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import studentsRoutes from './routes/students.routes.js';
 import teachersRoutes from './routes/teachers.routes.js';
 import teacherRoutes from './routes/teacher.routes.js';
+import adminRoutes from './routes/admin.routes.js';
+import publicRoutes from './routes/public.routes.js';
+import notificationsRoutes from './routes/notifications.routes.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -20,7 +28,9 @@ app.use((req, res, next) => {
 });
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
   credentials: true
@@ -28,12 +38,22 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Serve static files for uploaded images with additional CORS headers
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+}, express.static(path.join(__dirname, '../uploads')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/students', studentsRoutes);
 app.use('/api/teachers', teachersRoutes);
 app.use('/api/teacher', teacherRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/public', publicRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Health check
 app.get('/', (req, res) => {

@@ -8,29 +8,22 @@ export default function QuickLinks() {
       icon: "📅",
       title: "Academic Calendar",
       description: "View important dates and schedules",
-      link: "/academic-calendar",
+      link: "/academics#calendar",
       color: "primary"
     },
     {
-      icon: "💻",
-      title: "Online Learning",
-      description: "Access digital classrooms",
-      link: "/online-learning", 
+      icon: "👨‍🏫",
+      title: "Meet Our Teachers",
+      description: "Get to know our dedicated faculty",
+      link: "/academics#teachers",
       color: "secondary"
-    },
-    {
-      icon: "📊",
-      title: "Student Portal",
-      description: "Check grades and assignments",
-      link: "/student-portal",
-      color: "accent"
     },
     {
       icon: "🏫",
       title: "Campus Tour",
       description: "Explore our facilities through photos",
       link: "/gallery",
-      color: "primary"
+      color: "accent"
     }
   ];
 

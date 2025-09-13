@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { supabase } from '../services/supabase.service.js';
+import { getProfilePictureUrl, deleteProfilePicture } from '../services/upload.service.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'school-management-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -19,9 +20,10 @@ export const register = async (req, res) => {
   console.log('🔥 REGISTRATION REQUEST RECEIVED');
   console.log('Request body:', JSON.stringify(req.body, null, 2));
   console.log('Request headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Uploaded file:', req.file ? req.file.filename : 'No file uploaded');
 
   try {
-    const { email, password, firstName, lastName, role, phone } = req.body;
+    const { email, password, firstName, lastName, role, phone, subject, grade, employeeId } = req.body;
 
     console.log('📝 Extracted fields:', {
       email: email || 'MISSING',
@@ -29,7 +31,10 @@ export const register = async (req, res) => {
       firstName: firstName || 'MISSING',
       lastName: lastName || 'MISSING',
       role: role || 'MISSING',
-      phone: phone || 'NOT PROVIDED'
+      phone: phone || 'NOT PROVIDED',
+      subject: subject || 'NOT PROVIDED',
+      grade: grade || 'NOT PROVIDED',
+      employeeId: employeeId || 'NOT PROVIDED'
     });
 
     // Validate required fields
@@ -83,7 +88,7 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     console.log('✅ Password hashed successfully');
 
-    // Prepare user data
+    // Prepare user data with additional fields for teachers and students
     const userData = {
       email,
       password: hashedPassword,
@@ -94,6 +99,24 @@ export const register = async (req, res) => {
       status: role === 'admin' ? 'approved' : 'pending',
       created_at: new Date().toISOString()
     };
+
+    // Add profile picture data if file was uploaded
+    if (req.file) {
+      userData.profile_picture_filename = req.file.filename;
+      userData.profile_picture_url = getProfilePictureUrl(req.file.filename);
+      console.log('📸 Profile picture added:', userData.profile_picture_url);
+    }
+
+    // Add role-specific fields
+    if (role === 'teacher' && subject) {
+      userData.subject = subject;
+    }
+    if (role === 'teacher' && employeeId) {
+      userData.employee_id = employeeId;
+    }
+    if (role === 'student' && grade) {
+      userData.grade = grade;
+    }
 
     console.log('📦 User data to insert:', {
       ...userData,
@@ -135,7 +158,8 @@ export const register = async (req, res) => {
         firstName: newUser.first_name,
         lastName: newUser.last_name,
         role: newUser.role,
-        status: newUser.status
+        status: newUser.status,
+        profilePictureUrl: newUser.profile_picture_url
       }
     };
 
@@ -145,6 +169,12 @@ export const register = async (req, res) => {
   } catch (error) {
     console.log('❌ REGISTRATION EXCEPTION:', error);
     console.log('Stack trace:', error.stack);
+    
+    // If there was an error and a file was uploaded, clean it up
+    if (req.file) {
+      deleteProfilePicture(req.file.filename);
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -221,7 +251,8 @@ export const login = async (req, res) => {
         name: `${user.first_name} ${user.last_name}`,
         role: user.role,
         status: user.status,
-        phone: user.phone
+        phone: user.phone,
+        profilePictureUrl: user.profile_picture_url
       }
     });
 
@@ -272,7 +303,8 @@ export const verifyToken = async (req, res) => {
         name: `${user.first_name} ${user.last_name}`,
         role: user.role,
         status: user.status,
-        phone: user.phone
+        phone: user.phone,
+        profilePictureUrl: user.profile_picture_url
       }
     });
 
@@ -332,16 +364,41 @@ export const approveUser = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const { error } = await supabase
+    // First, get the user details before approval
+    const { data: user, error: getUserError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (getUserError || !user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Approve the user
+    const { error: approveError } = await supabase
       .from('users')
       .update({ status: 'approved' })
       .eq('id', userId);
 
-    if (error) {
+    if (approveError) {
       return res.status(500).json({
         success: false,
         error: 'Failed to approve user'
       });
+    }
+
+    // If the approved user is a teacher, automatically add them to teachers table
+    if (user.role === 'teacher') {
+      await syncTeacherToTeachersTable(user);
+    }
+
+    // If the approved user is a student, automatically add them to students table
+    if (user.role === 'student') {
+      await syncStudentToStudentsTable(user);
     }
 
     res.json({
@@ -357,6 +414,266 @@ export const approveUser = async (req, res) => {
     });
   }
 };
+
+// Helper function to sync approved teacher to teachers table
+async function syncTeacherToTeachersTable(user) {
+  try {
+    console.log(`🔄 Syncing teacher ${user.first_name} ${user.last_name} to teachers table...`);
+    
+    const teacherName = `${user.first_name} ${user.last_name}`;
+    
+    // Start with basic required data (name and subject are most likely to exist)
+    const basicTeacherData = {
+      name: teacherName,
+      subject: user.subject || ''
+    };
+
+    // Add profile picture data if available
+    if (user.profile_picture_url) {
+      basicTeacherData.profile_picture_url = user.profile_picture_url;
+    }
+    if (user.profile_picture_filename) {
+      basicTeacherData.profile_picture_filename = user.profile_picture_filename;
+    }
+
+    // Check if teacher already exists
+    const { data: existingTeacher, error: checkError } = await supabase
+      .from('teachers')
+      .select('*')
+      .eq('name', teacherName)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') {
+      // Table exists but teacher not found, try to insert with basic data first
+      const { error: insertError } = await supabase
+        .from('teachers')
+        .insert([basicTeacherData]);
+
+      if (insertError) {
+        console.error('❌ Failed to sync teacher to teachers table:', insertError);
+        return; // Exit if basic insert fails
+      }
+
+      console.log('✅ Teacher synced to teachers table with basic data');
+      
+      // Now try to update additional fields if they exist in the table
+      await updateAdditionalTeacherFields(teacherName, user);
+      
+    } else if (existingTeacher) {
+      console.log('ℹ️ Teacher already exists in teachers table, updating fields...');
+      await updateAdditionalTeacherFields(teacherName, user);
+    } else {
+      console.log('✅ Teacher synced to teachers table successfully');
+    }
+    
+  } catch (error) {
+    console.error('❌ Error syncing teacher to teachers table:', error);
+    // Don't throw error here, just log it - approval should still succeed
+  }
+}
+
+// Helper function to update additional teacher fields if columns exist
+async function updateAdditionalTeacherFields(teacherName, user) {
+  try {
+    // Try to update phone if column exists
+    if (user.phone) {
+      const { error: phoneError } = await supabase
+        .from('teachers')
+        .update({ phone: user.phone })
+        .eq('name', teacherName);
+      
+      if (!phoneError) {
+        console.log('✅ Updated teacher phone');
+      }
+    }
+
+    // Try to update employee_id if column exists
+    if (user.employee_id) {
+      const { error: empError } = await supabase
+        .from('teachers')
+        .update({ employee_id: user.employee_id })
+        .eq('name', teacherName);
+      
+      if (!empError) {
+        console.log('✅ Updated teacher employee_id');
+      }
+    }
+
+    // Try to update email if column exists
+    if (user.email) {
+      const { error: emailError } = await supabase
+        .from('teachers')
+        .update({ email: user.email })
+        .eq('name', teacherName);
+      
+      if (!emailError) {
+        console.log('✅ Updated teacher email');
+      }
+    }
+
+    // Try to update profile picture fields if columns exist
+    if (user.profile_picture_url) {
+      const { error: profileError } = await supabase
+        .from('teachers')
+        .update({ profile_picture_url: user.profile_picture_url })
+        .eq('name', teacherName);
+      
+      if (!profileError) {
+        console.log('✅ Updated teacher profile picture URL');
+      }
+    }
+
+    if (user.profile_picture_filename) {
+      const { error: filenameError } = await supabase
+        .from('teachers')
+        .update({ profile_picture_filename: user.profile_picture_filename })
+        .eq('name', teacherName);
+      
+      if (!filenameError) {
+        console.log('✅ Updated teacher profile picture filename');
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Error updating additional teacher fields:', error);
+    // Don't throw - this is just for additional fields
+  }
+}
+
+// Helper function to sync approved student to students table
+async function syncStudentToStudentsTable(user) {
+  try {
+    console.log(`🔄 Syncing student ${user.first_name} ${user.last_name} to students table...`);
+    
+    const studentName = `${user.first_name} ${user.last_name}`;
+    
+    // Start with basic required data (name is guaranteed to exist)
+    const basicStudentData = {
+      name: studentName
+    };
+
+    // Add profile picture data if available
+    if (user.profile_picture_url) {
+      basicStudentData.profile_picture_url = user.profile_picture_url;
+    }
+    if (user.profile_picture_filename) {
+      basicStudentData.profile_picture_filename = user.profile_picture_filename;
+    }
+
+    // Check if student already exists (try by name first, then email if available)
+    let existingStudent = null;
+    let checkError = null;
+    
+    // Try to find by name first
+    const { data: studentByName, error: nameError } = await supabase
+      .from('students')
+      .select('*')
+      .eq('name', studentName)
+      .single();
+
+    if (!nameError && studentByName) {
+      existingStudent = studentByName;
+    } else if (nameError && nameError.code !== 'PGRST116') {
+      checkError = nameError;
+    }
+
+    if (checkError) {
+      console.error('❌ Failed to check student existence:', checkError);
+      return;
+    }
+
+    if (!existingStudent) {
+      // Student not found, insert new student with basic data
+      const { error: insertError } = await supabase
+        .from('students')
+        .insert([basicStudentData]);
+
+      if (insertError) {
+        console.error('❌ Failed to sync student to students table:', insertError);
+        return; // Exit if basic insert fails
+      }
+
+      console.log('✅ Student synced to students table with basic data');
+    } else {
+      console.log('ℹ️ Student already exists in students table, updating fields...');
+    }
+    
+    // Now try to update additional fields if they exist in the table
+    await updateAdditionalStudentFields(studentName, user);
+    
+  } catch (error) {
+    console.error('❌ Error syncing student to students table:', error);
+    // Don't throw error here, just log it - approval should still succeed
+  }
+}
+
+// Helper function to update additional student fields if columns exist
+async function updateAdditionalStudentFields(studentName, user) {
+  try {
+    // Try to update email if column exists
+    if (user.email) {
+      const { error: emailError } = await supabase
+        .from('students')
+        .update({ email: user.email })
+        .eq('name', studentName);
+      
+      if (!emailError) {
+        console.log('✅ Updated student email');
+      }
+    }
+
+    // Try to update phone if column exists
+    if (user.phone) {
+      const { error: phoneError } = await supabase
+        .from('students')
+        .update({ phone: user.phone })
+        .eq('name', studentName);
+      
+      if (!phoneError) {
+        console.log('✅ Updated student phone');
+      }
+    }
+
+    // Try to update class/grade if column exists
+    if (user.grade || user.class) {
+      const { error: classError } = await supabase
+        .from('students')
+        .update({ class: user.grade || user.class })
+        .eq('name', studentName);
+      
+      if (!classError) {
+        console.log('✅ Updated student class');
+      }
+    }
+
+    // Try to update profile picture fields if columns exist
+    if (user.profile_picture_url) {
+      const { error: profileError } = await supabase
+        .from('students')
+        .update({ profile_picture_url: user.profile_picture_url })
+        .eq('name', studentName);
+      
+      if (!profileError) {
+        console.log('✅ Updated student profile picture URL');
+      }
+    }
+
+    if (user.profile_picture_filename) {
+      const { error: filenameError } = await supabase
+        .from('students')
+        .update({ profile_picture_filename: user.profile_picture_filename })
+        .eq('name', studentName);
+      
+      if (!filenameError) {
+        console.log('✅ Updated student profile picture filename');
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Error updating additional student fields:', error);
+    // Don't throw - this is just for additional fields
+  }
+}
 
 // Reject user (admin only)
 export const rejectUser = async (req, res) => {
@@ -388,3 +705,193 @@ export const rejectUser = async (req, res) => {
     });
   }
 };
+
+// Update user profile
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id; // From auth middleware
+    const { first_name, last_name, phone } = req.body;
+
+    console.log('📝 Profile update request for user:', userId);
+    console.log('Update data:', { first_name, last_name, phone });
+    console.log('File uploaded:', req.file ? req.file.filename : 'No file');
+
+    // Get current user
+    const { data: currentUser, error: getCurrentError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (getCurrentError || !currentUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Prepare update data
+    const updateData = {};
+    
+    if (first_name && first_name.trim()) {
+      updateData.first_name = first_name.trim();
+    }
+    
+    if (last_name && last_name.trim()) {
+      updateData.last_name = last_name.trim();
+    }
+    
+    if (phone !== undefined) {
+      updateData.phone = phone || null;
+    }
+
+    // Handle profile picture update
+    if (req.file) {
+      // Delete old profile picture if it exists
+      if (currentUser.profile_picture_filename) {
+        deleteProfilePicture(currentUser.profile_picture_filename);
+      }
+      
+      updateData.profile_picture_filename = req.file.filename;
+      updateData.profile_picture_url = getProfilePictureUrl(req.file.filename);
+      console.log('📸 New profile picture:', updateData.profile_picture_url);
+    }
+
+    // Update user in database
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('❌ Failed to update user:', updateError);
+      // Clean up uploaded file if database update failed
+      if (req.file) {
+        deleteProfilePicture(req.file.filename);
+      }
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to update profile'
+      });
+    }
+
+    // Also sync updates to related tables if applicable
+    if (currentUser.role === 'teacher' && currentUser.status === 'approved') {
+      await syncUpdatedTeacherData(updatedUser);
+    }
+    
+    if (currentUser.role === 'student' && currentUser.status === 'approved') {
+      await syncUpdatedStudentData(updatedUser);
+    }
+
+    console.log('✅ Profile updated successfully');
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        firstName: updatedUser.first_name,
+        lastName: updatedUser.last_name,
+        name: `${updatedUser.first_name} ${updatedUser.last_name}`,
+        role: updatedUser.role,
+        status: updatedUser.status,
+        phone: updatedUser.phone,
+        profile_picture_url: updatedUser.profile_picture_url
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Profile update error:', error);
+    // Clean up uploaded file if there was an error
+    if (req.file) {
+      deleteProfilePicture(req.file.filename);
+    }
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
+// Helper function to sync updated teacher data
+async function syncUpdatedTeacherData(user) {
+  try {
+    const teacherName = `${user.first_name} ${user.last_name}`;
+    const oldName = user.old_name; // We might need this if name changed
+    
+    const updateData = {
+      name: teacherName
+    };
+
+    if (user.phone) updateData.phone = user.phone;
+    if (user.email) updateData.email = user.email;
+    if (user.profile_picture_url) updateData.profile_picture_url = user.profile_picture_url;
+    if (user.profile_picture_filename) updateData.profile_picture_filename = user.profile_picture_filename;
+
+    // Try to update by current name first, then by old name
+    let { error } = await supabase
+      .from('teachers')
+      .update(updateData)
+      .eq('name', teacherName);
+
+    if (error) {
+      // Try with email if name update failed
+      const { error: emailError } = await supabase
+        .from('teachers')
+        .update(updateData)
+        .eq('email', user.email);
+      
+      if (!emailError) {
+        console.log('✅ Teacher data synced via email');
+      }
+    } else {
+      console.log('✅ Teacher data synced via name');
+    }
+
+  } catch (error) {
+    console.error('❌ Error syncing teacher data:', error);
+  }
+}
+
+// Helper function to sync updated student data
+async function syncUpdatedStudentData(user) {
+  try {
+    const studentName = `${user.first_name} ${user.last_name}`;
+    
+    const updateData = {
+      name: studentName
+    };
+
+    if (user.phone) updateData.phone = user.phone;
+    if (user.email) updateData.email = user.email;
+    if (user.profile_picture_url) updateData.profile_picture_url = user.profile_picture_url;
+    if (user.profile_picture_filename) updateData.profile_picture_filename = user.profile_picture_filename;
+
+    // Try to update by current name first
+    let { error } = await supabase
+      .from('students')
+      .update(updateData)
+      .eq('name', studentName);
+
+    if (error) {
+      // Try with email if name update failed
+      const { error: emailError } = await supabase
+        .from('students')
+        .update(updateData)
+        .eq('email', user.email);
+      
+      if (!emailError) {
+        console.log('✅ Student data synced via email');
+      }
+    } else {
+      console.log('✅ Student data synced via name');
+    }
+
+  } catch (error) {
+    console.error('❌ Error syncing student data:', error);
+  }
+}

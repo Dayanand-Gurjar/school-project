@@ -78,6 +78,10 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   const googleAuth = async (googleToken) => {
     try {
       const response = await api.post('/auth/google', { token: googleToken });
@@ -102,7 +106,8 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     googleAuth,
-    checkAuthStatus
+    checkAuthStatus,
+    updateUser
   };
 
   return (

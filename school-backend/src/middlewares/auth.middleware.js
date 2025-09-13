@@ -22,7 +22,7 @@ export const authenticateToken = async (req, res, next) => {
     // Get user from database to ensure they still exist and are active
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, email, first_name, last_name, role, status')
+      .select('id, email, first_name, last_name, role, status, subject, employee_id, grade')
       .eq('id', decoded.userId)
       .single();
 
@@ -47,7 +47,10 @@ export const authenticateToken = async (req, res, next) => {
       firstName: user.first_name,
       lastName: user.last_name,
       role: user.role,
-      status: user.status
+      status: user.status,
+      subject: user.subject,
+      employeeId: user.employee_id,
+      grade: user.grade
     };
 
     next();

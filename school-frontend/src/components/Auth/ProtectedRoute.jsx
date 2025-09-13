@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { USER_MESSAGES } from '../../config/constants';
 
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const { user, isAuthenticated, loading } = useAuth();
@@ -29,8 +30,7 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
               <div className="pending-icon">⏳</div>
               <h2>Account Pending Approval</h2>
               <p>
-                Your account is awaiting admin approval. You will receive an email 
-                notification once your account has been reviewed and approved.
+                {USER_MESSAGES.auth.awaitingApproval}
               </p>
               <button onClick={() => window.location.href = '/logout'} className="auth-btn primary">
                 Logout
@@ -51,8 +51,7 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
               <div className="rejected-icon">❌</div>
               <h2>Account Rejected</h2>
               <p>
-                Your account application has been rejected. Please contact the school 
-                administration for more information.
+                {USER_MESSAGES.auth.rejectedInfo}
               </p>
               <button onClick={() => window.location.href = '/logout'} className="auth-btn primary">
                 Logout

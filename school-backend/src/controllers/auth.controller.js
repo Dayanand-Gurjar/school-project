@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { supabase } from '../services/supabase.service.js';
 import { getProfilePictureUrl, deleteProfilePicture } from '../services/upload.service.js';

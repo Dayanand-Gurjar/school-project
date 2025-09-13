@@ -45,8 +45,11 @@ export default function QuickLinks() {
               className={`quicklinks__card quicklinks__card--${link.color}`}
             >
               <div className="quicklinks__icon">{link.icon}</div>
-              <h3 className="quicklinks__card-title">{link.title}</h3>
-              <p className="quicklinks__description">{link.description}</p>
+              <div className="quicklinks__content">
+                <h3 className="quicklinks__card-title">{link.title}</h3>
+                <p className="quicklinks__description">{link.description}</p>
+              </div>
+              <div className="quicklinks__overlay"></div>
               <div className="quicklinks__arrow">→</div>
             </Link>
           ))}

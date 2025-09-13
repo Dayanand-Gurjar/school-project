@@ -259,26 +259,6 @@ export default function GalleryPage() {
           </div>
         </div>
       </section>
-
-      {/* Virtual Tour CTA */}
-      <section className="gallery-cta">
-        <div className="container">
-          <div className="gallery-cta__content">
-            <h2 className="gallery-cta__title">Want to See More?</h2>
-            <p className="gallery-cta__description">
-              Schedule a visit to experience our facilities firsthand and meet our faculty
-            </p>
-            <div className="gallery-cta__actions">
-              <a href="/contact" className="btn btn-primary btn-lg">
-                Contact Us
-              </a>
-              <a href="/academics" className="btn btn-outline btn-lg">
-                View Programs
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

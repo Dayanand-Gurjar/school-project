@@ -41,9 +41,9 @@ export const SCHOOL_CONTACT = {
     full: "Knowledge City, KC 12345"
   },
   phone: {
-    main: "+1 (555) 123-4567",
-    principal: "+1 (555) 123-4568",
-    admissions: "+1 (555) 123-4569"
+    main: "+919999999999",
+    principal: "+919999999998",
+    admissions: "+919999999997"
   },
   email: {
     general: "info@nscbschool.edu",
@@ -83,18 +83,13 @@ export const NAV_LINKS = [
 // Quick Links for Footer
 export const QUICK_LINKS = [
   { name: "Academics", path: "/academics" },
-  { name: "Admissions", path: "/admissions" },
   { name: "Events", path: "/events" },
   { name: "Gallery", path: "/gallery" },
   { name: "Contact", path: "/contact" }
 ];
 
 // Legal Links
-export const LEGAL_LINKS = [
-  { name: "Privacy Policy", path: "/privacy" },
-  { name: "Terms of Service", path: "/terms" },
-  { name: "Accessibility", path: "/accessibility" }
-];
+export const LEGAL_LINKS = [];
 
 // User Messages
 export const USER_MESSAGES = {

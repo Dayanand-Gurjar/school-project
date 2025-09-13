@@ -11,6 +11,7 @@ import teacherRoutes from './routes/teacher.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import publicRoutes from './routes/public.routes.js';
 import notificationsRoutes from './routes/notifications.routes.js';
+import galleryRoutes from './routes/gallery.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,6 +55,7 @@ app.use('/api/teacher', teacherRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/gallery', galleryRoutes);
 
 // Health check
 app.get('/', (req, res) => {

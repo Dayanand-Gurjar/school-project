@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { fetchEvents, deleteEvent } from "../../services/api";
+import { useData } from "../../contexts/DataContext";
+import { deleteEvent } from "../../services/api";
 import ImageCarousel from "../common/ImageCarousel";
 import "./EventsList.css";
 
 export default function EventsList() {
+  const { getEvents, updateCache } = useData();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const adminSecret = "dev-secret";
@@ -14,7 +16,7 @@ export default function EventsList() {
 
   const loadEvents = async () => {
     try {
-      const eventData = await fetchEvents();
+      const eventData = await getEvents();
       setEvents(eventData);
     } catch (error) {
       console.error('Error loading events:', error);
@@ -27,7 +29,10 @@ export default function EventsList() {
     if (window.confirm('Are you sure you want to delete this event?')) {
       const result = await deleteEvent(id, adminSecret);
       if (result.success) {
-        setEvents(events.filter(event => event.id !== id));
+        const updatedEvents = events.filter(event => event.id !== id);
+        setEvents(updatedEvents);
+        // Update cache
+        updateCache('events', updatedEvents);
       } else {
         alert('Failed to delete event: ' + result.error);
       }

@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { api, fetchEvents } from '../../services/api';
+import { useData } from '../../contexts/DataContext';
+import { api } from '../../services/api';
 import EventForm from '../Events/EventForm';
 import ProfileForm from '../Profile/ProfileForm';
 import NotificationManager from '../Notifications/NotificationManager';
+import GalleryManager from '../Admin/GalleryManager';
 import './Dashboard.css';
 
 // Schedule Form Component
@@ -188,6 +190,18 @@ const ScheduleForm = ({ schedule, onSave, onCancel, availableGrades, availableSu
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const {
+    getEvents,
+    getStudents,
+    getTeachers,
+    getPendingUsers,
+    getAllUsers,
+    getSchedules,
+    invalidateCache,
+    updateCache,
+    isLoading
+  } = useData();
+  
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalTeachers: 0,
@@ -265,13 +279,12 @@ export default function AdminDashboard() {
   // Load schedule data from API
   const loadScheduleData = async () => {
     try {
-      console.log('📚 Loading schedules from database...');
-      const schedulesData = await api.getSchedules();
+      console.log('📚 Loading schedules from cache...');
+      const schedulesData = await getSchedules();
       setSchedules(schedulesData);
       console.log('✅ Schedules loaded:', schedulesData.length);
     } catch (error) {
       console.error('❌ Error loading schedules:', error);
-      // Keep empty array if API fails
       setSchedules([]);
     }
   };
@@ -400,16 +413,16 @@ export default function AdminDashboard() {
     return schedulesByTeacher;
   };
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
-      console.log('📊 Fetching admin dashboard data...');
+      console.log('📊 Fetching admin dashboard data from cache...');
       
       const [students, teachers, pending, allUsers, events] = await Promise.all([
-        api.getStudents(),
-        api.getTeachers(),
-        api.getPendingUsers(),
-        api.getAllUsers(),
-        fetchEvents()
+        getStudents(),
+        getTeachers(),
+        getPendingUsers(),
+        getAllUsers(),
+        getEvents()
       ]);
 
       console.log('📈 Dashboard data received:', {
@@ -435,7 +448,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getStudents, getTeachers, getPendingUsers, getAllUsers, getEvents]);
 
   const handleUserApproval = async (userId, action) => {
     try {
@@ -453,6 +466,16 @@ export default function AdminDashboard() {
         
         // Remove from pending users
         setPendingUsers(prev => prev.filter(user => user.id !== userId));
+        
+        // Update cache to reflect changes
+        updateCache('allUsers', (data) => data.map(user =>
+          user.id === userId ? { ...user, status: action === 'approve' ? 'approved' : 'rejected' } : user
+        ));
+        
+        // Invalidate related caches to force refresh
+        if (action === 'approve') {
+          invalidateCache(['allUsers']);
+        }
         
         // Update stats
         if (action === 'approve' && user) {
@@ -1276,6 +1299,12 @@ export default function AdminDashboard() {
       <div className="notifications-section">
         <NotificationManager />
       </div>
+    ),
+
+    gallery: (
+      <div className="gallery-section">
+        <GalleryManager />
+      </div>
     )
   };
 
@@ -1357,6 +1386,16 @@ export default function AdminDashboard() {
           }}
         >
           📢 Notifications
+        </button>
+        <button
+          className={`nav-tab ${activeTab === 'gallery' ? 'active' : ''}`}
+          onClick={() => {
+            setActiveTab('gallery');
+            setShowAllUsers(false);
+            setShowEventForm(false);
+          }}
+        >
+          🖼️ Gallery
         </button>
         <button
           className={`nav-tab ${activeTab === 'profile' ? 'active' : ''}`}

@@ -57,11 +57,21 @@ app.use('/api/public', publicRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/gallery', galleryRoutes);
 
-// Health check
+// Health check endpoints
 app.get('/', (req, res) => {
   res.json({
     success: true,
     message: 'School Management API is running',
+    version: '1.0.0'
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
     version: '1.0.0'
   });
 });

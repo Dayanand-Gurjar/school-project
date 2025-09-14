@@ -370,7 +370,7 @@ export default function GalleryManager() {
                 <div key={image.id} className={`image-card ${!image.is_active ? 'image-card--inactive' : ''}`}>
                   <div className="image-card__image">
                     <img 
-                      src={`${API_BASE.replace('/api', '')}${image.image_url}`} 
+                      src={image.image_url} 
                       alt={image.alt_text}
                       onError={(e) => {
                         e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"><rect width="200" height="150" fill="%23f0f0f0"/><text x="100" y="75" font-family="Arial" font-size="12" fill="%23666" text-anchor="middle">Image Error</text></svg>`;

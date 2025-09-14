@@ -12,7 +12,7 @@ export const getAllTeachers = async (req, res) => {
     // Also get teachers from users table where role = 'teacher'
     const { data: teachersFromUsers, error: usersError } = await supabase
       .from('users')
-      .select('id, first_name, last_name, email, phone')
+      .select('id, first_name, last_name, email, phone, profile_picture_url, subject')
       .eq('role', 'teacher')
       .eq('status', 'approved')
       .order('first_name', { ascending: true });
@@ -26,7 +26,8 @@ export const getAllTeachers = async (req, res) => {
         name: t.name,
         subject: t.subject,
         email: t.email || '',
-        phone: t.phone || ''
+        phone: t.phone || '',
+        profile_picture: t.profile_picture_url || null
       }));
     }
 
@@ -39,9 +40,10 @@ export const getAllTeachers = async (req, res) => {
         .map(u => ({
           id: u.id,
           name: `${u.first_name} ${u.last_name}`,
-          subject: '', // Will be empty for now, can be enhanced later
+          subject: u.subject || '', // Get subject from users table
           email: u.email,
-          phone: u.phone || ''
+          phone: u.phone || '',
+          profile_picture: u.profile_picture_url || null
         }));
       
       allTeachers = [...allTeachers, ...usersTeachers];

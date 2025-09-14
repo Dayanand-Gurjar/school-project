@@ -1,31 +1,10 @@
 import multer from 'multer';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
+import { supabase } from './supabase.service.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, '../../uploads/profile-pictures');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    // Generate unique filename with original extension
-    const uniqueId = uuidv4();
-    const extension = path.extname(file.originalname);
-    const filename = `profile_${uniqueId}${extension}`;
-    cb(null, filename);
-  }
-});
+// Configure multer for memory storage (since we're uploading to Supabase)
+const storage = multer.memoryStorage();
 
 // File filter to only allow images
 const fileFilter = (req, file, cb) => {
@@ -37,7 +16,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Create multer upload middleware
+// Create multer upload middleware for profile pictures
 export const uploadProfilePicture = multer({
   storage: storage,
   fileFilter: fileFilter,
@@ -46,24 +25,108 @@ export const uploadProfilePicture = multer({
   }
 }).single('profilePicture');
 
-// Helper function to get file URL
-export const getProfilePictureUrl = (filename) => {
-  if (!filename) return null;
-  return `/uploads/profile-pictures/${filename}`;
+// Create multer upload middleware for gallery images
+export const uploadGalleryImage = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit for gallery
+  }
+}).single('image');
+
+// Upload profile picture to Supabase Storage
+export const uploadProfilePictureToSupabase = async (file) => {
+  try {
+    const uniqueId = uuidv4();
+    const extension = path.extname(file.originalname);
+    const fileName = `profile_${uniqueId}${extension}`;
+    
+    const { data, error } = await supabase.storage
+      .from('profile-pictures')
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('profile-pictures')
+      .getPublicUrl(fileName);
+
+    return { success: true, data: { path: data.path, url: publicUrl } };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 };
 
-// Helper function to delete old profile picture
-export const deleteProfilePicture = (filename) => {
-  if (!filename) return;
-  
-  const filePath = path.join(uploadsDir, filename);
-  fs.unlink(filePath, (err) => {
-    if (err) {
-      console.error('Error deleting file:', err);
-    } else {
-      console.log('File deleted successfully:', filename);
-    }
-  });
+// Upload gallery image to Supabase Storage
+export const uploadGalleryImageToSupabase = async (file) => {
+  try {
+    const uniqueId = uuidv4();
+    const extension = path.extname(file.originalname);
+    const fileName = `gallery_${uniqueId}${extension}`;
+    
+    const { data, error } = await supabase.storage
+      .from('gallery-images')
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('gallery-images')
+      .getPublicUrl(fileName);
+
+    return { success: true, data: { path: data.path, url: publicUrl } };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+// Helper function to get profile picture URL (now returns Supabase URL directly)
+export const getProfilePictureUrl = (url) => {
+  return url; // Supabase URLs are already complete
+};
+
+// Helper function to delete profile picture from Supabase
+export const deleteProfilePicture = async (filePath) => {
+  try {
+    if (!filePath) return { success: true };
+    
+    const { error } = await supabase.storage
+      .from('profile-pictures')
+      .remove([filePath]);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting profile picture:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Helper function to delete gallery image from Supabase
+export const deleteGalleryImage = async (filePath) => {
+  try {
+    if (!filePath) return { success: true };
+    
+    const { error } = await supabase.storage
+      .from('gallery-images')
+      .remove([filePath]);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting gallery image:', error);
+    return { success: false, error: error.message };
+  }
 };
 
 // Middleware to handle upload errors

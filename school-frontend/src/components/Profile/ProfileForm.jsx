@@ -77,7 +77,7 @@ export default function ProfileForm() {
       formDataToSend.append('phone', formData.phone);
       
       if (formData.profile_picture) {
-        formDataToSend.append('profile_picture', formData.profile_picture);
+        formDataToSend.append('profilePicture', formData.profile_picture);
       }
 
       const token = localStorage.getItem('token');

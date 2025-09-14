@@ -1,7 +1,7 @@
  import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { supabase } from '../services/supabase.service.js';
-import { getProfilePictureUrl, deleteProfilePicture } from '../services/upload.service.js';
+import { uploadProfilePictureToSupabase, deleteProfilePicture, getProfilePictureUrl } from '../services/upload.service.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'school-management-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -102,9 +102,20 @@ export const register = async (req, res) => {
 
     // Add profile picture data if file was uploaded
     if (req.file) {
-      userData.profile_picture_filename = req.file.filename;
-      userData.profile_picture_url = getProfilePictureUrl(req.file.filename);
-      console.log('📸 Profile picture added:', userData.profile_picture_url);
+      console.log('📸 Uploading profile picture to Supabase...');
+      const uploadResult = await uploadProfilePictureToSupabase(req.file);
+      
+      if (uploadResult.success) {
+        userData.profile_picture_filename = uploadResult.data.path;
+        userData.profile_picture_url = uploadResult.data.url;
+        console.log('✅ Profile picture uploaded to Supabase:', userData.profile_picture_url);
+      } else {
+        console.error('❌ Failed to upload profile picture:', uploadResult.error);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to upload profile picture: ' + uploadResult.error
+        });
+      }
     }
 
     // Add role-specific fields
@@ -749,12 +760,21 @@ export const updateProfile = async (req, res) => {
     if (req.file) {
       // Delete old profile picture if it exists
       if (currentUser.profile_picture_filename) {
-        deleteProfilePicture(currentUser.profile_picture_filename);
+        await deleteProfilePicture(currentUser.profile_picture_filename);
       }
       
-      updateData.profile_picture_filename = req.file.filename;
-      updateData.profile_picture_url = getProfilePictureUrl(req.file.filename);
-      console.log('📸 New profile picture:', updateData.profile_picture_url);
+      const uploadResult = await uploadProfilePictureToSupabase(req.file);
+      
+      if (uploadResult.success) {
+        updateData.profile_picture_filename = uploadResult.data.path;
+        updateData.profile_picture_url = uploadResult.data.url;
+      } else {
+        console.error('Failed to upload profile picture:', uploadResult.error);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to upload profile picture: ' + uploadResult.error
+        });
+      }
     }
 
     // Update user in database
@@ -766,10 +786,10 @@ export const updateProfile = async (req, res) => {
       .single();
 
     if (updateError) {
-      console.error('❌ Failed to update user:', updateError);
+      console.error('Failed to update user:', updateError);
       // Clean up uploaded file if database update failed
-      if (req.file) {
-        deleteProfilePicture(req.file.filename);
+      if (req.file && updateData.profile_picture_filename) {
+        deleteProfilePicture(updateData.profile_picture_filename);
       }
       return res.status(500).json({
         success: false,
@@ -821,7 +841,6 @@ export const updateProfile = async (req, res) => {
 async function syncUpdatedTeacherData(user) {
   try {
     const teacherName = `${user.first_name} ${user.last_name}`;
-    const oldName = user.old_name; // We might need this if name changed
     
     const updateData = {
       name: teacherName
@@ -832,28 +851,38 @@ async function syncUpdatedTeacherData(user) {
     if (user.profile_picture_url) updateData.profile_picture_url = user.profile_picture_url;
     if (user.profile_picture_filename) updateData.profile_picture_filename = user.profile_picture_filename;
 
-    // Try to update by current name first, then by old name
-    let { error } = await supabase
+    // Try to update by current name first
+    let { data: nameResult, error } = await supabase
       .from('teachers')
       .update(updateData)
-      .eq('name', teacherName);
+      .eq('name', teacherName)
+      .select();
 
-    if (error) {
+    if (error || !nameResult || nameResult.length === 0) {
       // Try with email if name update failed
-      const { error: emailError } = await supabase
+      const { data: emailResult, error: emailError } = await supabase
         .from('teachers')
         .update(updateData)
-        .eq('email', user.email);
+        .eq('email', user.email)
+        .select();
       
-      if (!emailError) {
-        console.log('✅ Teacher data synced via email');
+      if (!emailError && emailResult && emailResult.length > 0) {
+        console.log('Teacher data synced via email');
+      } else {
+        // Try to insert the teacher if they don't exist
+        const { data: insertResult, error: insertError } = await supabase
+          .from('teachers')
+          .insert([updateData])
+          .select();
+        
+        if (insertError) {
+          console.error('Error creating teacher record:', insertError);
+        }
       }
-    } else {
-      console.log('✅ Teacher data synced via name');
     }
 
   } catch (error) {
-    console.error('❌ Error syncing teacher data:', error);
+    console.error('Error syncing teacher data:', error);
   }
 }
 

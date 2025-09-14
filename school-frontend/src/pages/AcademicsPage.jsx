@@ -147,7 +147,7 @@ export default function AcademicsPage() {
                   <div className="teacher-photo">
                     {teacher.profile_picture ? (
                       <img
-                        src={`${API_BASE}${teacher.profile_picture}`}
+                        src={teacher.profile_picture.startsWith('http') ? teacher.profile_picture : `${API_BASE}${teacher.profile_picture}`}
                         alt={teacher.name}
                         onError={(e) => {
                           e.target.style.display = 'none';

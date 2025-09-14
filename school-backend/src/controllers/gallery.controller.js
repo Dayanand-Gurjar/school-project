@@ -1,28 +1,9 @@
 import { supabase } from '../services/supabase.service.js';
 import multer from 'multer';
-import path from 'path';
-import { promises as fs } from 'fs';
-import { fileURLToPath } from 'url';
+import { uploadGalleryImageToSupabase, deleteGalleryImage } from '../services/upload.service.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Configure multer for image uploads
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../../uploads/gallery');
-    try {
-      await fs.mkdir(uploadPath, { recursive: true });
-      cb(null, uploadPath);
-    } catch (error) {
-      cb(error);
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, `gallery-${uniqueSuffix}${path.extname(file.originalname)}`);
-  }
-});
+// Configure multer for memory storage (for Supabase upload)
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
@@ -426,12 +407,21 @@ const createImage = async (req, res) => {
       });
     }
     
-    const image_url = `/uploads/gallery/${req.file.filename}`;
+    // Upload image to Supabase Storage
+    const uploadResult = await uploadGalleryImageToSupabase(req.file);
+    
+    if (!uploadResult.success) {
+      console.error('Upload to Supabase failed:', uploadResult.error);
+      return res.status(500).json({
+        success: false,
+        message: uploadResult.error || 'Failed to upload image'
+      });
+    }
     
     const imageData = {
       title,
       description,
-      image_url,
+      image_url: uploadResult.data.url,
       alt_text: alt_text || title,
       category_id: category_id || null,
       display_order: display_order || 0,
@@ -451,18 +441,12 @@ const createImage = async (req, res) => {
     if (error) {
       console.error('Create image error:', error);
       
-      // Delete uploaded file if database insert fails
-      if (req.file) {
-        try {
-          await fs.unlink(req.file.path);
-        } catch (unlinkError) {
-          console.error('Failed to delete uploaded file:', unlinkError);
-        }
-      }
+      // Delete uploaded file from Supabase if database insert fails
+      await deleteGalleryImage(uploadResult.data.path);
       
       return res.status(500).json({
         success: false,
-        message: 'Failed to upload image'
+        message: 'Failed to save image information'
       });
     }
     
@@ -473,15 +457,6 @@ const createImage = async (req, res) => {
     });
   } catch (error) {
     console.error('Create image error:', error);
-    
-    // Delete uploaded file if database insert fails
-    if (req.file) {
-      try {
-        await fs.unlink(req.file.path);
-      } catch (unlinkError) {
-        console.error('Failed to delete uploaded file:', unlinkError);
-      }
-    }
     
     res.status(500).json({
       success: false,
@@ -496,9 +471,10 @@ const updateImage = async (req, res) => {
     const { id } = req.params;
     const { title, description, alt_text, category_id, display_order, is_active } = req.body;
     
-    let oldImagePath = null;
+    let oldImageUrl = null;
+    let uploadResult = null;
     
-    // If new image is uploaded, get old image path to delete it
+    // If new image is uploaded, get old image URL and upload new one
     if (req.file) {
       const { data: oldImage } = await supabase
         .from('gallery_images')
@@ -506,7 +482,18 @@ const updateImage = async (req, res) => {
         .eq('id', id)
         .single();
       
-      oldImagePath = oldImage?.image_url;
+      oldImageUrl = oldImage?.image_url;
+      
+      // Upload new image to Supabase Storage
+      uploadResult = await uploadGalleryImageToSupabase(req.file);
+      
+      if (!uploadResult.success) {
+        console.error('Upload to Supabase failed:', uploadResult.error);
+        return res.status(500).json({
+          success: false,
+          message: uploadResult.error || 'Failed to upload new image'
+        });
+      }
     }
     
     // Prepare update data
@@ -521,8 +508,8 @@ const updateImage = async (req, res) => {
     };
     
     // Add new image data if file was uploaded
-    if (req.file) {
-      updateData.image_url = `/uploads/gallery/${req.file.filename}`;
+    if (req.file && uploadResult) {
+      updateData.image_url = uploadResult.data.url;
       updateData.file_size = req.file.size;
       updateData.file_type = req.file.mimetype;
       updateData.uploaded_at = new Date().toISOString();
@@ -538,13 +525,9 @@ const updateImage = async (req, res) => {
     if (error) {
       console.error('Update image error:', error);
       
-      // Delete uploaded file if database update fails
-      if (req.file) {
-        try {
-          await fs.unlink(req.file.path);
-        } catch (unlinkError) {
-          console.error('Failed to delete uploaded file:', unlinkError);
-        }
+      // Delete uploaded file from Supabase if database update fails
+      if (uploadResult) {
+        await deleteGalleryImage(uploadResult.data.path);
       }
       
       return res.status(500).json({
@@ -554,19 +537,23 @@ const updateImage = async (req, res) => {
     }
     
     if (!updatedImage) {
+      // Delete uploaded file from Supabase if no image found
+      if (uploadResult) {
+        await deleteGalleryImage(uploadResult.data.path);
+      }
+      
       return res.status(404).json({
         success: false,
         message: 'Image not found'
       });
     }
     
-    // Delete old image file if new one was uploaded
-    if (req.file && oldImagePath) {
-      try {
-        const oldFilePath = path.join(__dirname, '../../', oldImagePath);
-        await fs.unlink(oldFilePath);
-      } catch (unlinkError) {
-        console.error('Failed to delete old image file:', unlinkError);
+    // Delete old image from Supabase if new one was uploaded successfully
+    if (uploadResult && oldImageUrl) {
+      // Extract path from old URL for Supabase deletion
+      const oldPath = oldImageUrl.split('/').pop();
+      if (oldPath) {
+        await deleteGalleryImage(oldPath);
       }
     }
     
@@ -577,15 +564,6 @@ const updateImage = async (req, res) => {
     });
   } catch (error) {
     console.error('Update image error:', error);
-    
-    // Delete uploaded file if database update fails
-    if (req.file) {
-      try {
-        await fs.unlink(req.file.path);
-      } catch (unlinkError) {
-        console.error('Failed to delete uploaded file:', unlinkError);
-      }
-    }
     
     res.status(500).json({
       success: false,
@@ -613,7 +591,7 @@ const deleteImage = async (req, res) => {
       });
     }
     
-    const imagePath = imageToDelete.image_url;
+    const imageUrl = imageToDelete.image_url;
     
     // Delete from database
     const { data: deletedImage, error } = await supabase
@@ -631,13 +609,12 @@ const deleteImage = async (req, res) => {
       });
     }
     
-    // Delete image file
-    if (imagePath) {
-      try {
-        const filePath = path.join(__dirname, '../../', imagePath);
-        await fs.unlink(filePath);
-      } catch (unlinkError) {
-        console.error('Failed to delete image file:', unlinkError);
+    // Delete image file from Supabase Storage
+    if (imageUrl) {
+      // Extract path from URL for Supabase deletion
+      const imagePath = imageUrl.split('/').pop();
+      if (imagePath) {
+        await deleteGalleryImage(imagePath);
       }
     }
     

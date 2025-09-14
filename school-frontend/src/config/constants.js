@@ -34,11 +34,11 @@ export const THEME = {
 // School Contact Information
 export const SCHOOL_CONTACT = {
   address: {
-    street: "Udaipur street",
-    city: "Knowledge City",
-    state: "KC",
+    street: "Lai Ka Guda",
+    city: "Udaipur City",
+    state: "Rajasthan",
     zipCode: "12345",
-    full: "Knowledge City, KC 12345"
+    full: "Lai ka guda, Udaipur, Rajasthan, 12345"
   },
   phone: {
     main: "+919999999999",
@@ -51,9 +51,9 @@ export const SCHOOL_CONTACT = {
     principal: "principal@nscbschool.edu"
   },
   hours: {
-    classes: "Monday - Friday: 8:00 AM - 3:00 PM",
-    office: "Monday - Friday: 7:30 AM - 4:00 PM",
-    general: "Monday - Friday: 8:00 AM - 4:00 PM"
+    classes: "Monday - Friday: 7:00 AM - 1:00 PM",
+    office: "Monday - Friday: 7:30 AM - 1:30 PM",
+    general: "Monday - Friday: 7:00 AM - 1:00 PM"
   },
   social: {
     facebook: "#",
@@ -66,7 +66,7 @@ export const SCHOOL_CONTACT = {
 // School Information
 export const SCHOOL_INFO = {
   description: "Empowering students with knowledge, character, and leadership skills for over 30 years. Building tomorrow's leaders today.",
-  establishedYear: 1994,
+  establishedYear: 2000,
   motto: "Excellence in Education",
   principalMessage: "Welcome to our school community where every student matters."
 };

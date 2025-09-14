@@ -43,7 +43,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: contrast(1.1) brightness(0.85) saturate(1.1);
+  filter: contrast(0.9) brightness(0.6) saturate(0.8) sepia(0.1);
   transition: filter 0.8s ease-in-out;
 }
 
@@ -55,10 +55,11 @@
   height: 100%;
   background: linear-gradient(
     135deg,
-    rgba(30, 58, 138, 0.75) 0%,
-    rgba(55, 48, 163, 0.55) 50%,
-    rgba(30, 64, 175, 0.75) 100%
+    rgba(30, 58, 138, 0.85) 0%,
+    rgba(55, 48, 163, 0.70) 50%,
+    rgba(30, 64, 175, 0.85) 100%
   );
+  mix-blend-mode: multiply;
   transition: opacity 0.8s ease-in-out;
 }
 
@@ -68,12 +69,20 @@
   left: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.3;
-  background: radial-gradient(
-    ellipse at center,
-    transparent 30%,
-    rgba(30, 58, 138, 0.4) 100%
-  );
+  opacity: 0.6;
+  background:
+    radial-gradient(
+      ellipse at center,
+      transparent 20%,
+      rgba(30, 58, 138, 0.6) 80%
+    ),
+    linear-gradient(
+      45deg,
+      rgba(30, 58, 138, 0.2) 0%,
+      transparent 50%,
+      rgba(55, 48, 163, 0.2) 100%
+    );
+  mix-blend-mode: overlay;
   transition: opacity 0.8s ease-in-out;
 }
 

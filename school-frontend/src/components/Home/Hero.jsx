@@ -11,7 +11,7 @@ export default function Hero() {
       title: `Welcome to ${SCHOOL_NAME}`,
       subtitle: "Nurturing Excellence Since 1990",
       description: "Empowering students with knowledge, character, and leadership skills for a brighter tomorrow.",
-      image: "/assets/photo1.jpeg",
+      image: "/assets/photo1.jpg",
       cta: "Explore Programs",
       themeColor: "primary"
     },
@@ -19,7 +19,7 @@ export default function Hero() {
       title: "Academic Excellence",
       subtitle: "World-Class Education",
       description: "Our comprehensive curriculum and expert faculty ensure students reach their full potential.",
-      image: "/assets/photo2.jpeg",
+      image: "/assets/photo2.jpg",
       cta: "View Academics",
       themeColor: "secondary"
     },
@@ -27,7 +27,7 @@ export default function Hero() {
       title: "Innovation & Technology",
       subtitle: "Future-Ready Learning",
       description: "State-of-the-art facilities and modern teaching methods prepare students for tomorrow's challenges.",
-      image: "/assets/photo3.jpeg",
+      image: "/assets/photo3.jpg",
       cta: "View Gallery",
       themeColor: "accent"
     }

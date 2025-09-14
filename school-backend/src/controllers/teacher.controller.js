@@ -4,87 +4,15 @@ import { supabase } from '../services/supabase.service.js';
 export const getTeacherSchedule = async (req, res) => {
   try {
     const teacherId = req.user.id;
-    const teacherName = `${req.user.firstName} ${req.user.lastName}`;
+    console.log("teacher id: ",req.user.id)
 
-    // First, check if schedules table exists, if not create sample data
+    // Fetch schedules by teacher_id (most robust - doesn't change when names are updated)
     const { data: schedules, error } = await supabase
       .from('schedules')
       .select('*')
-      .eq('teacher_name', teacherName)
+      .eq('teacher_id', teacherId)
       .order('day', { ascending: true })
       .order('start_time', { ascending: true });
-
-    if (error && error.code === 'PGRST116') {
-      // Table doesn't exist, return sample data for now
-      const sampleSchedule = [
-        {
-          id: 1,
-          day: 'Monday',
-          startTime: '09:00',
-          endTime: '09:45',
-          subject: req.user.subject || 'Mathematics',
-          grade: '9',
-          section: 'A',
-          room: 'Room 101'
-        },
-        {
-          id: 2,
-          day: 'Monday',
-          startTime: '10:00',
-          endTime: '10:45',
-          subject: req.user.subject || 'Mathematics',
-          grade: '10',
-          section: 'B',
-          room: 'Room 101'
-        },
-        {
-          id: 3,
-          day: 'Tuesday',
-          startTime: '09:00',
-          endTime: '09:45',
-          subject: req.user.subject || 'Mathematics',
-          grade: '9',
-          section: 'A',
-          room: 'Room 101'
-        },
-        {
-          id: 4,
-          day: 'Wednesday',
-          startTime: '11:00',
-          endTime: '11:45',
-          subject: req.user.subject || 'Mathematics',
-          grade: '11',
-          section: 'A',
-          room: 'Room 101'
-        },
-        {
-          id: 5,
-          day: 'Thursday',
-          startTime: '09:00',
-          endTime: '09:45',
-          subject: req.user.subject || 'Mathematics',
-          grade: '9',
-          section: 'A',
-          room: 'Room 101'
-        },
-        {
-          id: 6,
-          day: 'Friday',
-          startTime: '10:00',
-          endTime: '10:45',
-          subject: req.user.subject || 'Mathematics',
-          grade: '10',
-          section: 'B',
-          room: 'Room 101'
-        }
-      ];
-
-      return res.json({
-        success: true,
-        data: sampleSchedule,
-        message: 'Sample schedule data (schedules table not yet created)'
-      });
-    }
 
     if (error) {
       console.error('Get teacher schedule error:', error);
@@ -110,6 +38,7 @@ export const getTeacherSchedule = async (req, res) => {
       success: true,
       data: transformedSchedules
     });
+    console.log("teacher schedule",transformedSchedules);
 
   } catch (error) {
     console.error('Get teacher schedule error:', error);

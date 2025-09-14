@@ -820,7 +820,7 @@ export const updateProfile = async (req, res) => {
         role: updatedUser.role,
         status: updatedUser.status,
         phone: updatedUser.phone,
-        profile_picture_url: updatedUser.profile_picture_url
+        profilePictureUrl: updatedUser.profile_picture_url
       }
     });
 

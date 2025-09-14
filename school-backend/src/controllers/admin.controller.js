@@ -3,15 +3,16 @@ import { supabase } from '../services/supabase.service.js';
 // Create a new schedule
 export const createSchedule = async (req, res) => {
   try {
-    const { 
-      grade, 
-      section = 'A', 
-      subject, 
-      teacher, 
-      day, 
-      startTime, 
-      endTime, 
-      room 
+    const {
+      grade,
+      section = 'A',
+      subject,
+      teacher,
+      teacherId,
+      day,
+      startTime,
+      endTime,
+      room
     } = req.body;
 
     // Validation
@@ -19,6 +20,14 @@ export const createSchedule = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields: grade, subject, teacher, day, startTime, endTime, room'
+      });
+    }
+
+    // Additional validation for teacherId
+    if (!teacherId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Teacher ID is required'
       });
     }
 
@@ -48,15 +57,19 @@ export const createSchedule = async (req, res) => {
       });
     }
 
-    // Try to find teacher_id by name
-    const { data: teacherData } = await supabase
-      .from('users')
-      .select('id')
-      .eq('role', 'teacher')
-      .ilike('first_name', `%${teacher.split(' ')[0]}%`)
+    // Verify teacher exists in teachers table
+    const { data: teacherData, error: teacherError } = await supabase
+      .from('teachers')
+      .select('id, name')
+      .eq('id', teacherId)
       .single();
 
-    const teacherId = teacherData?.id || null;
+    if (teacherError || !teacherData) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid teacher selected'
+      });
+    }
 
     // Check for schedule conflicts (same grade, section, day, overlapping time)
     const { data: conflictCheck } = await supabase
@@ -223,17 +236,26 @@ export const updateSchedule = async (req, res) => {
       });
     }
 
-    // Try to find teacher_id by name if teacher is provided
+    // Handle teacher update
+    const { teacherId: newTeacherId } = req.body;
     let teacherId = existingSchedule.teacher_id;
-    if (teacher && teacher !== existingSchedule.teacher_name) {
-      const { data: teacherData } = await supabase
-        .from('users')
-        .select('id')
-        .eq('role', 'teacher')
-        .ilike('first_name', `%${teacher.split(' ')[0]}%`)
+    
+    if (newTeacherId && newTeacherId !== existingSchedule.teacher_id) {
+      // Verify new teacher exists in teachers table
+      const { data: teacherData, error: teacherError } = await supabase
+        .from('teachers')
+        .select('id, name')
+        .eq('id', newTeacherId)
         .single();
+
+      if (teacherError || !teacherData) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid teacher selected'
+        });
+      }
       
-      teacherId = teacherData?.id || null;
+      teacherId = newTeacherId;
     }
 
     // Update the schedule

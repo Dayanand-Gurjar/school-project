@@ -21,12 +21,14 @@ export default function ProfileForm() {
     if (user) {
       setFormData({
         first_name: user.firstName || '',
-        last_name: user.lastName || '', 
+        last_name: user.lastName || '',
         email: user.email || '',
         phone: user.phone || '',
         profile_picture: null
       });
-      setCurrentProfilePicture(user.profile_picture_url);
+      // Check multiple possible field names for profile picture
+      const profilePictureUrl = user.profile_picture_url || user.profilePictureUrl || null;
+      setCurrentProfilePicture(profilePictureUrl);
     }
   }, [user]);
 
@@ -94,7 +96,9 @@ export default function ProfileForm() {
       if (data.success) {
         // Update user context
         updateUser(data.user);
-        setCurrentProfilePicture(data.user.profile_picture_url);
+        // Handle both possible field names for profile picture
+        const newProfilePictureUrl = data.user.profilePictureUrl || data.user.profile_picture_url || null;
+        setCurrentProfilePicture(newProfilePictureUrl);
         setPreviewImage(null);
         setFormData(prev => ({
           ...prev,
@@ -135,9 +139,9 @@ export default function ProfileForm() {
             {previewImage ? (
               <img src={previewImage} alt="Preview" className="profile-preview" />
             ) : currentProfilePicture ? (
-              <img 
-                src={`${API_BASE}${currentProfilePicture}`} 
-                alt="Current profile" 
+              <img
+                src={currentProfilePicture.startsWith('http') ? currentProfilePicture : `${API_BASE}${currentProfilePicture}`}
+                alt="Current profile"
                 className="profile-preview"
                 onError={(e) => {
                   e.target.style.display = 'none';

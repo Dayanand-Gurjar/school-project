@@ -15,6 +15,7 @@ const ScheduleForm = ({ schedule, onSave, onCancel, availableGrades, availableSu
     section: schedule?.section || 'A',
     subject: schedule?.subject || '',
     teacher: schedule?.teacher || '',
+    teacherId: schedule?.teacher_id || '',
     day: schedule?.day || 'Monday',
     startTime: schedule?.startTime || '',
     endTime: schedule?.endTime || '',
@@ -29,11 +30,22 @@ const ScheduleForm = ({ schedule, onSave, onCancel, availableGrades, availableSu
     }));
   };
 
+  const handleTeacherChange = (e) => {
+    const selectedTeacherId = e.target.value;
+    const selectedTeacher = approvedTeachers.find(teacher => teacher.id.toString() === selectedTeacherId);
+    
+    setFormData(prev => ({
+      ...prev,
+      teacherId: selectedTeacherId,
+      teacher: selectedTeacher ? selectedTeacher.name : ''
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
     // Validation
-    if (!formData.grade || !formData.subject || !formData.teacher || !formData.startTime || !formData.endTime || !formData.room) {
+    if (!formData.grade || !formData.subject || !formData.teacher || !formData.teacherId || !formData.startTime || !formData.endTime || !formData.room) {
       alert('Please fill in all required fields');
       return;
     }
@@ -44,7 +56,13 @@ const ScheduleForm = ({ schedule, onSave, onCancel, availableGrades, availableSu
       return;
     }
 
-    onSave(formData);
+    // Send the data with teacherId included
+    const scheduleData = {
+      ...formData,
+      teacherId: formData.teacherId,
+      teacher: formData.teacher
+    };
+    onSave(scheduleData);
   };
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -106,13 +124,13 @@ const ScheduleForm = ({ schedule, onSave, onCancel, availableGrades, availableSu
             <select
               id="teacher"
               name="teacher"
-              value={formData.teacher}
-              onChange={handleInputChange}
+              value={formData.teacherId}
+              onChange={handleTeacherChange}
               required
             >
               <option value="">Select Teacher</option>
               {approvedTeachers.map(teacher => (
-                <option key={teacher.id} value={teacher.name}>
+                <option key={teacher.id} value={teacher.id}>
                   {teacher.name} {teacher.subject ? `(${teacher.subject})` : ''}
                 </option>
               ))}

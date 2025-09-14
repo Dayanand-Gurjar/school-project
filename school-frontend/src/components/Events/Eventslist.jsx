@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useData } from "../../contexts/DataContext";
-import { deleteEvent } from "../../services/api";
 import ImageCarousel from "../common/ImageCarousel";
 import "./EventsList.css";
 
 export default function EventsList() {
-  const { getEvents, updateCache } = useData();
+  const { getEvents } = useData();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const adminSecret = "dev-secret";
   
   useEffect(() => {
     loadEvents();
@@ -22,20 +20,6 @@ export default function EventsList() {
       console.error('Error loading events:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
-      const result = await deleteEvent(id, adminSecret);
-      if (result.success) {
-        const updatedEvents = events.filter(event => event.id !== id);
-        setEvents(updatedEvents);
-        // Update cache
-        updateCache('events', updatedEvents);
-      } else {
-        alert('Failed to delete event: ' + result.error);
-      }
     }
   };
 
@@ -94,21 +78,6 @@ export default function EventsList() {
                       {event.image_urls && event.image_urls.length > 1 && (
                         <span>🖼️ {event.image_urls.length} images</span>
                       )}
-                    </div>
-                    
-                    <div className="events-list__item-actions">
-                      <button 
-                        className="events-list__item-btn events-list__item-btn--edit"
-                        onClick={() => alert('Edit functionality coming soon!')}
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button 
-                        className="events-list__item-btn events-list__item-btn--delete"
-                        onClick={() => handleDelete(event.id)}
-                      >
-                        🗑️ Delete
-                      </button>
                     </div>
                   </div>
                 </div>

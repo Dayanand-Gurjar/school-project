@@ -9,7 +9,7 @@ export default function Hero() {
   const heroSlides = [
     {
       title: `Welcome to ${SCHOOL_NAME}`,
-      subtitle: "Nurturing Excellence Since 1990",
+      subtitle: "Nurturing Excellence Since 2000",
       description: "Empowering students with knowledge, character, and leadership skills for a brighter tomorrow.",
       image: "/assets/photo1.jpg",
       cta: "Explore Programs",
@@ -102,11 +102,11 @@ export default function Hero() {
                 
                 <div className="hero__stats">
                   <div className="hero__stat">
-                    <span className="hero__stat-number">2000+</span>
+                    <span className="hero__stat-number">100+</span>
                     <span className="hero__stat-label">Students</span>
                   </div>
                   <div className="hero__stat">
-                    <span className="hero__stat-number">150+</span>
+                    <span className="hero__stat-number">11</span>
                     <span className="hero__stat-label">Teachers</span>
                   </div>
                   <div className="hero__stat">
@@ -114,7 +114,7 @@ export default function Hero() {
                     <span className="hero__stat-label">Success Rate</span>
                   </div>
                   <div className="hero__stat">
-                    <span className="hero__stat-number">30+</span>
+                    <span className="hero__stat-number">20+</span>
                     <span className="hero__stat-label">Years Legacy</span>
                   </div>
                 </div>

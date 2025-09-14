@@ -5,10 +5,25 @@ import "./EventsPreview.css";
 
 export default function EventsPreview() {
   const [events, setEvents] = useState([]);
+  const [expandedEvents, setExpandedEvents] = useState(new Set());
   
   useEffect(() => {
     fetchEvents().then(setEvents).catch(console.error);
   }, []);
+
+  const toggleExpanded = (eventId) => {
+    setExpandedEvents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventId)) {
+        newSet.delete(eventId);
+      } else {
+        newSet.add(eventId);
+      }
+      return newSet;
+    });
+  };
+
+  const isExpanded = (eventId) => expandedEvents.has(eventId);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -37,7 +52,21 @@ export default function EventsPreview() {
                 </div>
                 <div className="events-preview__item-content">
                   <h4 className="events-preview__item-title">{event.title}</h4>
-                  <p className="events-preview__item-description">{event.description}</p>
+                  <div className="events-preview__item-description-container">
+                    <p
+                      className={`events-preview__item-description ${isExpanded(event.id) ? 'expanded' : ''}`}
+                    >
+                      {event.description}
+                    </p>
+                    {event.description && event.description.length > 100 && (
+                      <button
+                        className="events-preview__expand-btn"
+                        onClick={() => toggleExpanded(event.id)}
+                      >
+                        {isExpanded(event.id) ? 'Show less' : '...more'}
+                      </button>
+                    )}
+                  </div>
                   <div className="events-preview__item-footer">
                     <div className="events-preview__item-date">
                       {formatDate(event.event_date)}

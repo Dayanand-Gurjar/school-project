@@ -83,7 +83,7 @@ const ScheduleForm = ({ schedule, onSave, onCancel, availableGrades, availableSu
             >
               <option value="">Select Grade</option>
               {availableGrades.map(grade => (
-                <option key={grade} value={grade}>Grade {grade}</option>
+                <option key={grade} value={grade}>{grade}</option>
               ))}
             </select>
           </div>
@@ -262,10 +262,9 @@ export default function AdminDashboard() {
       const teachersData = await api.getTeachersData();
       setApprovedTeachers(teachersData);
 
-      // Get available classes/grades from students table
-      const studentsData = await api.getStudentsData();
-      const classes = [...new Set(studentsData.map(student => student.class).filter(Boolean))];
-      setAvailableGrades(classes.sort());
+      // Set constant grades (1st through 8th)
+      const constantGrades = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'];
+      setAvailableGrades(constantGrades);
 
       // Get available subjects from teachers table
       const subjects = [...new Set(teachersData.map(teacher => teacher.subject).filter(Boolean))];
@@ -279,14 +278,14 @@ export default function AdminDashboard() {
 
       console.log('📚 Available data fetched:', {
         teachers: teachersData.length,
-        classes: classes.length,
+        grades: constantGrades.length,
         subjects: allSubjects.length
       });
     } catch (error) {
       console.error('❌ Error fetching available data:', error);
       
-      // Fallback data if API calls fail
-      setAvailableGrades(['9', '10', '11', '12']);
+      // Fallback data if API calls fail - same constant grades
+      setAvailableGrades(['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th']);
       setAvailableSubjects([
         'Mathematics', 'English', 'Science', 'Physics', 'Chemistry', 'Biology',
         'History', 'Geography', 'Computer Science', 'Physical Education', 'Art', 'Music'
@@ -408,7 +407,7 @@ export default function AdminDashboard() {
     schedules
       .filter(schedule => schedule.day === day)
       .forEach(schedule => {
-        const classKey = `Grade ${schedule.grade} - Section ${schedule.section}`;
+        const classKey = `${schedule.grade} - Section ${schedule.section}`;
         if (!schedulesByClass[classKey]) {
           schedulesByClass[classKey] = [];
         }
@@ -935,7 +934,7 @@ export default function AdminDashboard() {
                                   {teacherSchedules.map(schedule => (
                                     <div key={schedule.id} className="schedule-card">
                                       <div className="schedule-header">
-                                        <span className="schedule-grade">Grade {schedule.grade}</span>
+                                        <span className="schedule-grade">{schedule.grade}</span>
                                         <span className="schedule-section">Section {schedule.section}</span>
                                       </div>
                                       <div className="schedule-content">
@@ -1075,7 +1074,7 @@ export default function AdminDashboard() {
                         <span className={`user-role ${user.role}`}>{user.role}</span>
                         <span className={`user-status ${user.status}`}>{user.status}</span>
                         {user.role === 'student' && user.grade && (
-                          <span className="user-grade">Grade {user.grade}</span>
+                          <span className="user-grade">{user.grade}</span>
                         )}
                         {user.role === 'teacher' && user.subject && (
                           <span className="user-subject">{user.subject}</span>

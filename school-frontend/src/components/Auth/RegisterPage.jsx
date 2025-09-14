@@ -126,8 +126,8 @@ export default function RegisterPage() {
   };
 
   const grades = [
-    '1st Grade', '2nd Grade', '3rd Grade', '4th Grade', 
-    '5th Grade', '6th Grade', '7th Grade', '8th Grade'
+    '1st', '2nd', '3rd', '4th',
+    '5th', '6th', '7th', '8th'
   ];
 
   const subjects = [

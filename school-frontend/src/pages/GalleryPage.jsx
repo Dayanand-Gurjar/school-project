@@ -169,7 +169,7 @@ export default function GalleryPage() {
                 <div key={image.id} className="gallery-item">
                   <div className="gallery-item__image-container">
                     <img
-                      src={image.image_url ? `${API_BASE.replace('/api', '')}${image.image_url}` : image.image}
+                      src={image.image_url}
                       alt={image.alt_text || image.alt || image.title}
                       className="gallery-item__image"
                       onError={(e) => {

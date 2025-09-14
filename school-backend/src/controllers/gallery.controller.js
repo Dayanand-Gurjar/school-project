@@ -292,7 +292,15 @@ const getImages = async (req, res) => {
     
     let query = supabase
       .from('gallery_images')
-      .select('*')
+      .select(`
+        *,
+        gallery_categories (
+          id,
+          name,
+          slug,
+          icon
+        )
+      `)
       .order('display_order')
       .order('created_at', { ascending: false });
     
@@ -322,8 +330,9 @@ const getImages = async (req, res) => {
     // Format data to match expected structure
     const formattedImages = images.map(img => ({
       ...img,
-      category_name: null,
-      category_slug: null,
+      category_name: img.gallery_categories?.name || 'No Category',
+      category_slug: img.gallery_categories?.slug || null,
+      category_icon: img.gallery_categories?.icon || null,
       first_name: null,
       last_name: null
     }));
@@ -354,7 +363,15 @@ const getImageById = async (req, res) => {
     
     const { data: image, error } = await supabase
       .from('gallery_images')
-      .select('*')
+      .select(`
+        *,
+        gallery_categories (
+          id,
+          name,
+          slug,
+          icon
+        )
+      `)
       .eq('id', id)
       .single();
     
@@ -368,8 +385,9 @@ const getImageById = async (req, res) => {
     // Format data to match expected structure
     const formattedImage = {
       ...image,
-      category_name: null,
-      category_slug: null,
+      category_name: image.gallery_categories?.name || 'No Category',
+      category_slug: image.gallery_categories?.slug || null,
+      category_icon: image.gallery_categories?.icon || null,
       first_name: null,
       last_name: null
     };

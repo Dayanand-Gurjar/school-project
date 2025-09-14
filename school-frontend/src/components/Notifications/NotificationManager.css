@@ -131,6 +131,8 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  box-sizing: border-box; /* Ensure consistent sizing */
+  line-height: 1; /* Consistent line height */
 }
 
 .btn-primary {
@@ -166,15 +168,21 @@
 .btn-danger {
   background: #dc2626;
   color: white;
+  border: 2px solid #dc2626; /* Add border to match btn-outline */
 }
 
 .btn-danger:hover {
   background: #b91c1c;
+  border-color: #b91c1c; /* Update border color on hover */
 }
 
 .btn-sm {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
+  min-width: 90px; /* Increased width to accommodate "Delete" text fully */
+  white-space: nowrap; /* Prevent text wrapping */
+  text-align: center; /* Center the text */
+  height: 36px; /* Fixed height for consistency */
 }
 
 /* Notifications List */
@@ -302,6 +310,21 @@
   flex-direction: column;
   gap: 0.5rem;
   margin-left: 1rem;
+  min-width: 120px; /* Ensure minimum width for button text */
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.notification-actions .btn {
+  width: 100% !important; /* Make all buttons in notification actions the same width */
+  justify-content: center; /* Center the text */
+  box-sizing: border-box; /* Include border in width calculation */
+  min-width: 90px !important; /* Override Dashboard.css btn-small styles */
+  padding: 0.5rem 1rem !important; /* Override Dashboard.css btn-small padding */
+  font-size: 0.875rem !important; /* Override Dashboard.css btn-small font-size */
+  height: 36px !important; /* Fixed height to prevent size inconsistencies */
+  white-space: nowrap !important; /* Prevent text wrapping */
+  text-align: center !important; /* Center the text */
+  line-height: 1 !important; /* Consistent line height */
 }
 
 /* Responsive Design */

@@ -9,26 +9,23 @@ export default function Hero() {
   const heroSlides = [
     {
       title: `Welcome to ${SCHOOL_NAME}`,
-      subtitle: "Nurturing Excellence Since 2000",
-      description: "Empowering students with knowledge, character, and leadership skills for a brighter tomorrow.",
+      subtitle: "A Safe Haven for Every Child",
+      description: "Providing education, care, and hope to rescued child laborers, homeless children, and those affected by calamities. Every child deserves a chance to learn, grow, and dream.",
       image: "/assets/photo1.jpg",
-      cta: "Explore Programs",
       themeColor: "primary"
     },
     {
-      title: "Academic Excellence",
-      subtitle: "World-Class Education",
-      description: "Our comprehensive curriculum and expert faculty ensure students reach their full potential.",
+      title: "Residential Care & Education",
+      subtitle: "More Than Just a School",
+      description: "Our residential facilities provide a loving home environment for children separated from families, offering comprehensive care, education, and emotional support.",
       image: "/assets/photo2.jpg",
-      cta: "View Academics",
       themeColor: "secondary"
     },
     {
-      title: "Innovation & Technology",
-      subtitle: "Future-Ready Learning",
-      description: "State-of-the-art facilities and modern teaching methods prepare students for tomorrow's challenges.",
+      title: "Healing Through Learning",
+      subtitle: "Transforming Lives Daily",
+      description: "We believe in the power of education to heal trauma, restore dignity, and build futures. Here, every child finds protection, purpose, and possibility.",
       image: "/assets/photo3.jpg",
-      cta: "View Gallery",
       themeColor: "accent"
     }
   ];
@@ -87,36 +84,6 @@ export default function Hero() {
                   <p className="hero__description">
                     {slide.description}
                   </p>
-                  <div className="hero__actions">
-                    <Link
-                      to={slide.cta === "View Gallery" ? "/gallery" : "/academics"}
-                      className="btn btn-primary btn-lg"
-                    >
-                      {slide.cta}
-                    </Link>
-                    <Link to="/contact" className="btn btn-outline btn-lg">
-                      Contact Us
-                    </Link>
-                  </div>
-                </div>
-                
-                <div className="hero__stats">
-                  <div className="hero__stat">
-                    <span className="hero__stat-number">100+</span>
-                    <span className="hero__stat-label">Students</span>
-                  </div>
-                  <div className="hero__stat">
-                    <span className="hero__stat-number">11</span>
-                    <span className="hero__stat-label">Teachers</span>
-                  </div>
-                  <div className="hero__stat">
-                    <span className="hero__stat-number">95%</span>
-                    <span className="hero__stat-label">Success Rate</span>
-                  </div>
-                  <div className="hero__stat">
-                    <span className="hero__stat-number">20+</span>
-                    <span className="hero__stat-label">Years Legacy</span>
-                  </div>
                 </div>
               </div>
             </div>

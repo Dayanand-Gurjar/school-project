@@ -1,4 +1,4 @@
-export const SCHOOL_NAME = import.meta.env.VITE_SCHOOL_NAME || "NSCB School";
+export const SCHOOL_NAME = import.meta.env.VITE_SCHOOL_NAME || "NSCB School Udaipur";
 export const LOGO_URL = import.meta.env.VITE_LOGO_URL || "/logo.png";
 export const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
 
@@ -34,26 +34,25 @@ export const THEME = {
 // School Contact Information
 export const SCHOOL_CONTACT = {
   address: {
-    street: "Lai Ka Guda",
-    city: "Udaipur City",
+    street: "Lai Ka Guda, Badi, Badgaon",
+    city: "Udaipur",
     state: "Rajasthan",
-    zipCode: "12345",
-    full: "Lai ka guda, Udaipur, Rajasthan, 12345"
+    zipCode: "313001",
+    full: "Lai ka guda, Udaipur, Rajasthan, 313001"
   },
   phone: {
-    main: "+919999999999",
-    principal: "+919999999998",
+    main: "+919828668406",
+    principal: "+919828668406",
     admissions: "+919999999997"
   },
   email: {
-    general: "info@nscbschool.edu",
-    admissions: "admissions@nscbschool.edu",
-    principal: "principal@nscbschool.edu"
+    general: "gupsresidential@gmail.com",
+    admissions: "gupsresidential@gmail.com",
+    principal: "gupsresidential@gmail.com"
   },
   hours: {
-    classes: "Monday - Friday: 7:00 AM - 1:00 PM",
-    office: "Monday - Friday: 7:30 AM - 1:30 PM",
-    general: "Monday - Friday: 7:00 AM - 1:00 PM"
+    winter: "10:00 AM - 4:00 PM",
+    summer: "07:30 AM - 1:00 PM",
   },
   social: {
     facebook: "#",
@@ -65,10 +64,10 @@ export const SCHOOL_CONTACT = {
 
 // School Information
 export const SCHOOL_INFO = {
-  description: "Empowering students with knowledge, character, and leadership skills for over 30 years. Building tomorrow's leaders today.",
-  establishedYear: 2000,
-  motto: "Excellence in Education",
-  principalMessage: "Welcome to our school community where every student matters."
+  description: "A sanctuary of hope and healing, providing education, care, and protection to rescued child laborers, homeless children, and those affected by calamities. Transforming vulnerable lives through compassionate education and residential care.",
+  establishedYear: 2011,
+  motto: "Every Child Deserves Hope",
+  principalMessage: "In our caring embrace, every vulnerable child finds not just education, but a loving home where dreams are nurtured and futures are rebuilt with dignity and hope."
 };
 
 // Navigation Links

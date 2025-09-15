@@ -34,8 +34,8 @@ export default function ContactPage() {
 
             <div className="contact-card">
               <h2>🕒 School Hours</h2>
-              <p><strong>Classes:</strong> {SCHOOL_CONTACT.hours.classes}<br />
-              <strong>Office:</strong> {SCHOOL_CONTACT.hours.office}</p>
+              <p><strong>Summer:</strong> {SCHOOL_CONTACT.hours.summer}<br />
+              <strong>Winter:</strong> {SCHOOL_CONTACT.hours.winter}</p>
             </div>
           </div>
         </div>

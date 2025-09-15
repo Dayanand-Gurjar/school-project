@@ -10,21 +10,18 @@ export default function Hero() {
     {
       title: `Welcome to ${SCHOOL_NAME}`,
       subtitle: "A Safe Haven for Every Child",
-      description: "Providing education, care, and hope to rescued child laborers, homeless children, and those affected by calamities. Every child deserves a chance to learn, grow, and dream.",
       image: "/assets/photo1.jpg",
       themeColor: "primary"
     },
     {
       title: "Residential Care & Education",
       subtitle: "More Than Just a School",
-      description: "Our residential facilities provide a loving home environment for children separated from families, offering comprehensive care, education, and emotional support.",
       image: "/assets/photo2.jpg",
       themeColor: "secondary"
     },
     {
       title: "Healing Through Learning",
       subtitle: "Transforming Lives Daily",
-      description: "We believe in the power of education to heal trauma, restore dignity, and build futures. Here, every child finds protection, purpose, and possibility.",
       image: "/assets/photo3.jpg",
       themeColor: "accent"
     }
@@ -80,9 +77,6 @@ export default function Hero() {
                   </h1>
                   <p className="hero__subtitle">
                     {slide.subtitle}
-                  </p>
-                  <p className="hero__description">
-                    {slide.description}
                   </p>
                 </div>
               </div>

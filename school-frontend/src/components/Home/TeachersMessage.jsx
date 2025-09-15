@@ -37,34 +37,37 @@ export default function TeachersMessage() {
         <div className="teachers-message__grid">
           {teacherMessages.map((teacher, index) => (
             <div key={index} className="teachers-message__card">
-              <div className="teachers-message__card-header">
-                <div className="teachers-message__avatar">
-                  <img
-                    src={teacher.image}
-                    alt={teacher.name}
-                    className="teachers-message__photo"
-                  />
-                  <div className="teachers-message__quote-small">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h4v10h-10z" fill="currentColor"/>
-                    </svg>
+              <div className="teachers-message__avatar">
+                <img
+                  src={teacher.image}
+                  alt={teacher.name}
+                  className="teachers-message__photo"
+                />
+                <div className="teachers-message__quote-small">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h4v10h-10z" fill="currentColor"/>
+                  </svg>
+                </div>
+              </div>
+              
+              <div className="teachers-message__card-content">
+                <div className="teachers-message__card-header">
+                  <div className="teachers-message__info">
+                    <h3 className="teachers-message__name">{teacher.name}</h3>
+                    <p className="teachers-message__role">{teacher.role}</p>
                   </div>
                 </div>
-                <div className="teachers-message__info">
-                  <h3 className="teachers-message__name">{teacher.name}</h3>
-                  <p className="teachers-message__role">{teacher.role}</p>
+                
+                <div className="teachers-message__content">
+                  <p className="teachers-message__text">"{teacher.message}"</p>
                 </div>
-              </div>
-              
-              <div className="teachers-message__content">
-                <p className="teachers-message__text">"{teacher.message}"</p>
-              </div>
-              
-              <div className="teachers-message__decoration">
-                <div className="teachers-message__heart">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="currentColor"/>
-                  </svg>
+                
+                <div className="teachers-message__decoration">
+                  <div className="teachers-message__heart">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="currentColor"/>
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>

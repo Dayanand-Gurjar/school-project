@@ -15,7 +15,8 @@ export default function RegisterPage() {
     phone: '',
     grade: '', // for students
     subject: '', // for teachers
-    employeeId: '' // for teachers
+    employeeId: '', // for teachers
+    qualification: '' // for teachers
   });
   const [profilePicture, setProfilePicture] = useState(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState(null);
@@ -95,8 +96,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (formData.role === 'teacher' && (!formData.subject || !formData.employeeId)) {
-      setError('Please fill in all teacher details');
+    if (formData.role === 'teacher' && (!formData.subject || !formData.employeeId || !formData.qualification)) {
+      setError('Please fill in all teacher details including qualification');
       setLoading(false);
       return;
     }
@@ -341,6 +342,18 @@ export default function RegisterPage() {
                       <option key={subject} value={subject}>{subject}</option>
                     ))}
                   </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="qualification">Qualification</label>
+                  <input
+                    type="text"
+                    id="qualification"
+                    name="qualification"
+                    value={formData.qualification}
+                    onChange={handleChange}
+                    required
+                    placeholder="Enter your highest qualification (e.g., B.Ed, M.A, M.Sc)"
+                  />
                 </div>
               </>
             )}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { api } from '../../services/api';
+import { API_BASE } from '../../config/constants';
 import EventForm from '../Events/EventForm';
 import ProfileForm from '../Profile/ProfileForm';
 import NotificationManager from '../Notifications/NotificationManager';
@@ -206,6 +207,508 @@ const ScheduleForm = ({ schedule, onSave, onCancel, availableGrades, availableSu
   );
 };
 
+// User Details Modal Component
+const UserDetailsModal = ({ user, onClose, onUpdate }) => {
+  const [editMode, setEditMode] = useState(false);
+  
+  // Helper function to get photo URL from user object with all possible field names
+  const getUserPhotoUrl = (userObj) => {
+    return userObj?.profile_picture_url ||
+           userObj?.profilePictureUrl ||
+           userObj?.profile_photo_url ||
+           userObj?.photo_url ||
+           userObj?.image_url ||
+           userObj?.profilePhoto ||
+           userObj?.profileImage ||
+           userObj?.avatar ||
+           userObj?.picture ||
+           '';
+  };
+  const [formData, setFormData] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    role: user?.role || '',
+    status: user?.status || '',
+    grade: user?.grade || '',
+    subject: user?.subject || '',
+    qualification: user?.qualification || '',
+    profile_picture_url: getUserPhotoUrl(user)
+  });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(getUserPhotoUrl(user));
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const photoUrl = getUserPhotoUrl(user);
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        role: user.role || '',
+        status: user.status || '',
+        grade: user.grade || '',
+        subject: user.subject || '',
+        qualification: user.qualification || '',
+        profile_picture_url: photoUrl
+      });
+      setPhotoPreview(photoUrl);
+      setSelectedFile(null);
+    }
+  }, [user]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+      
+      setSelectedFile(file);
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPhotoPreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setUploadingPhoto(true);
+    
+    try {
+      // Create FormData for multipart upload (same as ProfileForm)
+      const formDataToSend = new FormData();
+      
+      // Add text fields
+      formDataToSend.append('firstName', formData.firstName);
+      formDataToSend.append('lastName', formData.lastName);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('phone', formData.phone || '');
+      formDataToSend.append('status', formData.status);
+      
+      // Add role-specific fields
+      if (formData.role === 'student' && formData.grade) {
+        formDataToSend.append('grade', formData.grade);
+      }
+      if (formData.role === 'teacher') {
+        if (formData.subject) formDataToSend.append('subject', formData.subject);
+        if (formData.qualification) formDataToSend.append('qualification', formData.qualification);
+      }
+      
+      // Add photo file if selected
+      if (selectedFile) {
+        formDataToSend.append('profilePicture', selectedFile);
+      }
+
+      const token = localStorage.getItem('token');
+      const apiUrl = `${API_BASE}/api/auth/users/${user.id}`;
+      console.log('🔄 Making PUT request to:', apiUrl);
+      console.log('📦 FormData contents:', Object.fromEntries(formDataToSend));
+      
+      const response = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formDataToSend
+      });
+
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response headers:', Object.fromEntries(response.headers));
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Response error text:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('✅ User updated successfully!');
+        onUpdate(data.user);
+        onClose();
+      } else {
+        alert(`❌ Error updating user: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('❌ Error updating user:', error);
+      alert('❌ Error updating user. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const removePhoto = () => {
+    setSelectedFile(null);
+    setPhotoPreview('');
+    setFormData(prev => ({
+      ...prev,
+      profile_picture_url: ''
+    }));
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>{editMode ? 'Edit User Details' : 'User Details'}</h3>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="modal-body">
+          {!editMode ? (
+            <div className="user-details-content">
+              {/* User Photo Display */}
+              <div className="user-photo-section">
+                {getUserPhotoUrl(user) ? (
+                  <div className="user-photo-display">
+                    <img
+                      src={getUserPhotoUrl(user).startsWith('http')
+                        ? getUserPhotoUrl(user)
+                        : `${import.meta.env.VITE_API_URL}${getUserPhotoUrl(user)}`}
+                      alt={`${user.firstName} ${user.lastName}`}
+                      className="user-photo"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.nextElementSibling.style.display = 'flex';
+                      }}
+                    />
+                  </div>
+                ) : null}
+                {!getUserPhotoUrl(user) && (
+                  <div className="user-photo-placeholder">
+                    <div className="photo-icon">📷</div>
+                    <p>No photo available</p>
+                  </div>
+                )}
+                {getUserPhotoUrl(user) && (
+                  <div className="user-photo-placeholder" style={{ display: 'none' }}>
+                    <div className="photo-icon">📷</div>
+                    <p>No photo available</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="user-details-section">
+                <h4>Basic Information</h4>
+                <div className="user-details-grid">
+                  <div className="user-detail-item">
+                    <div className="user-detail-label">Full Name</div>
+                    <div className="user-detail-value">{user.firstName} {user.lastName}</div>
+                  </div>
+                  
+                  <div className="user-detail-item">
+                    <div className="user-detail-label">Email</div>
+                    <div className="user-detail-value">{user.email}</div>
+                  </div>
+                  
+                  <div className="user-detail-item">
+                    <div className="user-detail-label">Phone</div>
+                    <div className="user-detail-value">{user.phone || <span className="empty">Not provided</span>}</div>
+                  </div>
+                  
+                  <div className="user-detail-item">
+                    <div className="user-detail-label">Role</div>
+                    <div className="user-detail-value">
+                      <span className={`user-role ${user.role}`}>{user.role}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="user-detail-item">
+                    <div className="user-detail-label">Status</div>
+                    <div className="user-detail-value">
+                      <span className={`user-status ${user.status}`}>{user.status}</span>
+                    </div>
+                  </div>
+
+                  {user.role === 'student' && user.grade && (
+                    <div className="user-detail-item">
+                      <div className="user-detail-label">Grade</div>
+                      <div className="user-detail-value">{user.grade}</div>
+                    </div>
+                  )}
+
+                  <div className="user-detail-item">
+                    <div className="user-detail-label">Joined</div>
+                    <div className="user-detail-value">{new Date(user.createdAt).toLocaleDateString()}</div>
+                  </div>
+
+                  {user.lastLogin && (
+                    <div className="user-detail-item">
+                      <div className="user-detail-label">Last Login</div>
+                      <div className="user-detail-value">{new Date(user.lastLogin).toLocaleDateString()}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {user.role === 'teacher' && (user.subject || user.qualification) && (
+                <div className="user-details-section">
+                  <h4>Teacher Information</h4>
+                  <div className="user-details-grid">
+                    {user.subject && (
+                      <div className="user-detail-item">
+                        <div className="user-detail-label">Subject</div>
+                        <div className="user-detail-value">{user.subject}</div>
+                      </div>
+                    )}
+                    {user.qualification && (
+                      <div className="user-detail-item">
+                        <div className="user-detail-label">Qualification</div>
+                        <div className="user-detail-value">🎓 {user.qualification}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="user-edit-form">
+              {/* Photo Edit Section */}
+              <div className="user-edit-section">
+                <h4>Profile Photo</h4>
+                <div className="photo-edit-container">
+                  <div className="photo-preview">
+                    {photoPreview ? (
+                      <div className="photo-preview-container">
+                        <img
+                          src={photoPreview.startsWith('http') || photoPreview.startsWith('data:')
+                            ? photoPreview
+                            : `${import.meta.env.VITE_API_URL}${photoPreview}`}
+                          alt="Preview"
+                          className="photo-preview-img"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.parentElement.nextElementSibling.style.display = 'flex';
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="remove-photo-btn"
+                          onClick={removePhoto}
+                          title="Remove Photo"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="photo-placeholder">
+                        <div className="photo-icon">📷</div>
+                        <p>No photo selected</p>
+                      </div>
+                    )}
+                    {photoPreview && (
+                      <div className="photo-placeholder" style={{ display: 'none' }}>
+                        <div className="photo-icon">📷</div>
+                        <p>No photo selected</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="photo-upload-controls">
+                    <input
+                      type="file"
+                      id="photoUpload"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor="photoUpload" className="photo-upload-btn">
+                      📁 Choose Photo
+                    </label>
+                    <p className="photo-upload-hint">
+                      Max file size: 5MB. Formats: JPG, PNG, GIF
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="user-edit-section">
+                <h4>Basic Information</h4>
+                <div className="user-edit-grid">
+                  <div className="user-edit-item">
+                    <label htmlFor="firstName">First Name</label>
+                    <input
+                      type="text"
+                      id="firstName"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="user-edit-item">
+                    <label htmlFor="lastName">Last Name</label>
+                    <input
+                      type="text"
+                      id="lastName"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="user-edit-item">
+                    <label htmlFor="email">Email</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="user-edit-item">
+                    <label htmlFor="phone">Phone</label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+
+                  <div className="user-edit-item">
+                    <label htmlFor="status">Status</label>
+                    <select
+                      id="status"
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+
+                  {formData.role === 'student' && (
+                    <div className="user-edit-item">
+                      <label htmlFor="grade">Grade</label>
+                      <select
+                        id="grade"
+                        name="grade"
+                        value={formData.grade}
+                        onChange={handleInputChange}
+                      >
+                        <option value="">Select Grade</option>
+                        <option value="1st">1st</option>
+                        <option value="2nd">2nd</option>
+                        <option value="3rd">3rd</option>
+                        <option value="4th">4th</option>
+                        <option value="5th">5th</option>
+                        <option value="6th">6th</option>
+                        <option value="7th">7th</option>
+                        <option value="8th">8th</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {formData.role === 'teacher' && (
+                <div className="user-edit-section">
+                  <h4>Teacher Information</h4>
+                  <div className="user-edit-grid">
+                    <div className="user-edit-item">
+                      <label htmlFor="subject">Subject</label>
+                      <input
+                        type="text"
+                        id="subject"
+                        name="subject"
+                        value={formData.subject}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Mathematics, English"
+                      />
+                    </div>
+
+                    <div className="user-edit-item">
+                      <label htmlFor="qualification">Qualification</label>
+                      <input
+                        type="text"
+                        id="qualification"
+                        name="qualification"
+                        value={formData.qualification}
+                        onChange={handleInputChange}
+                        placeholder="e.g. B.Ed, M.A, M.Sc"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="modal-footer">
+          {!editMode ? (
+            <>
+              <button
+                className="btn-cancel"
+                onClick={onClose}
+              >
+                Close
+              </button>
+              <button
+                className="btn-mode-toggle"
+                onClick={() => setEditMode(true)}
+              >
+                ✏️ Edit Details
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="btn-cancel"
+                onClick={() => setEditMode(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-save"
+                onClick={handleSubmit}
+                disabled={uploadingPhoto}
+              >
+                {uploadingPhoto ? '⏳ Uploading Photo...' : '💾 Save Changes'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const {
@@ -232,9 +735,12 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [showAllUsers, setShowAllUsers] = useState(false);
+  const [userFilter, setUserFilter] = useState('all'); // 'all', 'students', 'teachers'
   const [showEventForm, setShowEventForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [showAllEvents, setShowAllEvents] = useState(false);
+  const [showUserDetails, setShowUserDetails] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   // Schedule Management State
   const [schedules, setSchedules] = useState([]);
@@ -485,9 +991,12 @@ export default function AdminDashboard() {
         setPendingUsers(prev => prev.filter(user => user.id !== userId));
         
         // Update cache to reflect changes
-        updateCache('allUsers', (data) => data.map(user =>
-          user.id === userId ? { ...user, status: action === 'approve' ? 'approved' : 'rejected' } : user
-        ));
+        updateCache('allUsers', (data) => {
+          if (!data || !Array.isArray(data)) return data;
+          return data.map(user =>
+            user.id === userId ? { ...user, status: action === 'approve' ? 'approved' : 'rejected' } : user
+          );
+        });
         
         // Invalidate related caches to force refresh
         if (action === 'approve') {
@@ -569,32 +1078,136 @@ export default function AdminDashboard() {
     setShowEventForm(true);
   };
 
+  const handleUserClick = (user) => {
+    setSelectedUser(user);
+    setShowUserDetails(true);
+  };
+
+  const handleCloseUserDetails = () => {
+    setShowUserDetails(false);
+    setSelectedUser(null);
+  };
+
+  const handleUpdateUser = (updatedUserData) => {
+    // Update the user in the allUsers state
+    setAllUsers(prev => prev.map(user =>
+      user.id === selectedUser.id ? { ...user, ...updatedUserData } : user
+    ));
+    
+    // Update cache
+    updateCache('allUsers', (data) => {
+      if (!data || !Array.isArray(data)) return data;
+      return data.map(user =>
+        user.id === selectedUser.id ? { ...user, ...updatedUserData } : user
+      );
+    });
+    
+    // Update the selected user for the modal
+    setSelectedUser(prev => ({ ...prev, ...updatedUserData }));
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      console.log(`🗑️ Deleting user ${userId}`);
+      
+      const response = await api.deleteUser(userId);
+
+      if (response.success) {
+        // Find the user being deleted
+        const user = allUsers.find(u => u.id === userId);
+        
+        // Remove from all users list
+        setAllUsers(prev => prev.filter(user => user.id !== userId));
+        
+        // Remove from pending users if exists
+        setPendingUsers(prev => prev.filter(user => user.id !== userId));
+        
+        // Update cache - only update allUsers cache (pendingUsers is derived from allUsers)
+        updateCache('allUsers', (data) => {
+          if (!data || !Array.isArray(data)) return data;
+          return data.filter(user => user.id !== userId);
+        });
+        
+        // Update stats
+        if (user) {
+          setStats(prev => ({
+            ...prev,
+            totalStudents: prev.totalStudents - (user.role === 'student' && user.status === 'approved' ? 1 : 0),
+            totalTeachers: prev.totalTeachers - (user.role === 'teacher' && user.status === 'approved' ? 1 : 0),
+            pendingApprovals: prev.pendingApprovals - (user.status === 'pending' ? 1 : 0)
+          }));
+          alert(`✅ ${user.firstName} ${user.lastName} has been deleted successfully.`);
+        }
+      } else {
+        alert(`❌ Error deleting user: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('❌ Error deleting user:', error);
+      alert('❌ Error deleting user. Please try again.');
+    }
+  };
+
   const tabContent = {
     overview: (
       <div className="dashboard-overview">
         <div className="stats-grid">
-          <div className="stat-card">
+          <div
+            className="stat-card clickable"
+            onClick={() => {
+              setActiveTab('users');
+              setShowAllUsers(true);
+              setUserFilter('students');
+            }}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="stat-icon">👨‍🎓</div>
             <div className="stat-content">
               <h3>{stats.totalStudents}</h3>
               <p>Total Students</p>
             </div>
           </div>
-          <div className="stat-card">
+          <div
+            className="stat-card clickable"
+            onClick={() => {
+              setActiveTab('users');
+              setShowAllUsers(true);
+              setUserFilter('teachers');
+            }}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="stat-icon">👩‍🏫</div>
             <div className="stat-content">
               <h3>{stats.totalTeachers}</h3>
               <p>Total Teachers</p>
             </div>
           </div>
-          <div className="stat-card">
+          <div
+            className="stat-card clickable"
+            onClick={() => {
+              setActiveTab('approvals');
+              setShowAllUsers(false);
+            }}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="stat-icon">⏳</div>
             <div className="stat-content">
               <h3>{stats.pendingApprovals}</h3>
               <p>Pending Approvals</p>
             </div>
           </div>
-          <div className="stat-card">
+          <div
+            className="stat-card clickable"
+            onClick={() => {
+              setActiveTab('events');
+              setShowAllUsers(false);
+              setShowEventForm(false);
+            }}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="stat-icon">📅</div>
             <div className="stat-content">
               <h3>{stats.totalEvents}</h3>
@@ -1017,45 +1630,76 @@ export default function AdminDashboard() {
         {!showAllUsers ? (
           <div className="users-preview">
             <div className="stats-summary">
-              <div className="stat-card">
+              <div
+                className="stat-card clickable"
+                onClick={() => {
+                  setShowAllUsers(true);
+                  setUserFilter('students');
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="stat-icon">👨‍🎓</div>
                 <div className="stat-content">
                   <h3>{stats.totalStudents}</h3>
                   <p>Students</p>
                 </div>
               </div>
-              <div className="stat-card">
+              <div
+                className="stat-card clickable"
+                onClick={() => {
+                  setShowAllUsers(true);
+                  setUserFilter('teachers');
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="stat-icon">👩‍🏫</div>
                 <div className="stat-content">
                   <h3>{stats.totalTeachers}</h3>
                   <p>Teachers</p>
                 </div>
               </div>
-              <div className="stat-card">
+              <div
+                className="stat-card clickable"
+                onClick={() => {
+                  setShowAllUsers(true);
+                  setUserFilter('all');
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="stat-icon">👥</div>
                 <div className="stat-content">
-                  <h3>{allUsers.length}</h3>
+                  <h3>{allUsers.filter(user => user.role !== 'admin').length}</h3>
                   <p>Total Users</p>
                 </div>
               </div>
             </div>
-            <button
-              className="btn-primary"
-              onClick={() => setShowAllUsers(true)}
-            >
-              View All Users
-            </button>
+            <p style={{ textAlign: 'center', color: '#6b7280', marginTop: '1rem' }}>
+              Click on any card above to view specific user types
+            </p>
           </div>
         ) : (
           <div className="all-users">
             <div className="users-header">
               <button
                 className="btn-secondary"
-                onClick={() => setShowAllUsers(false)}
+                onClick={() => {
+                  setShowAllUsers(false);
+                  setUserFilter('all');
+                }}
               >
                 ← Back to Summary
               </button>
-              <h4>All Users ({allUsers.length})</h4>
+              <h4>
+                {userFilter === 'students' ? 'Students' :
+                 userFilter === 'teachers' ? 'Teachers' :
+                 'All Users'}
+                ({(() => {
+                  const nonAdminUsers = allUsers.filter(user => user.role !== 'admin');
+                  if (userFilter === 'students') return nonAdminUsers.filter(user => user.role === 'student').length;
+                  if (userFilter === 'teachers') return nonAdminUsers.filter(user => user.role === 'teacher').length;
+                  return nonAdminUsers.length;
+                })()})
+              </h4>
             </div>
             
             {allUsers.length === 0 ? (
@@ -1064,8 +1708,19 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div className="users-grid">
-                {allUsers.map(user => (
-                  <div key={user.id} className="user-card">
+                {(() => {
+                  let filteredUsers = allUsers.filter(user => user.role !== 'admin');
+                  if (userFilter === 'students') {
+                    filteredUsers = filteredUsers.filter(user => user.role === 'student');
+                  } else if (userFilter === 'teachers') {
+                    filteredUsers = filteredUsers.filter(user => user.role === 'teacher');
+                  }
+                  return filteredUsers.map(user => (
+                  <div
+                    key={user.id}
+                    className="user-card clickable"
+                    onClick={() => handleUserClick(user)}
+                  >
                     <div className="user-info">
                       <h4>{user.firstName} {user.lastName}</h4>
                       <p className="user-email">{user.email}</p>
@@ -1081,32 +1736,56 @@ export default function AdminDashboard() {
                         )}
                       </div>
                     </div>
-                    <div className="user-actions">
+                    <div className="user-actions" onClick={(e) => e.stopPropagation()}>
                       {user.status === 'pending' && (
                         <>
                           <button
-                            onClick={() => handleUserApproval(user.id, 'approve')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUserApproval(user.id, 'approve');
+                            }}
                             className="btn-approve btn-small"
                           >
                             ✓ Approve
                           </button>
                           <button
-                            onClick={() => handleUserApproval(user.id, 'reject')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUserApproval(user.id, 'reject');
+                            }}
                             className="btn-reject btn-small"
                           >
                             ✗ Reject
                           </button>
                         </>
                       )}
-                      {user.status === 'approved' && (
-                        <span className="status-badge approved">Active</span>
-                      )}
                       {user.status === 'rejected' && (
                         <span className="status-badge rejected">Rejected</span>
                       )}
+                      <button
+                        className="btn-view-details btn-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUserClick(user);
+                        }}
+                        title="View/Edit Details"
+                      >
+                        👁️
+                      </button>
+                      <button
+                        className="btn-delete btn-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteUser(user.id);
+                        }}
+                        title="Delete User"
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </div>
-                ))}
+                ))
+                })()}
               </div>
             )}
           </div>
@@ -1429,6 +2108,15 @@ export default function AdminDashboard() {
       <div className="dashboard-content">
         {tabContent[activeTab]}
       </div>
+
+      {/* User Details Modal */}
+      {showUserDetails && selectedUser && (
+        <UserDetailsModal
+          user={selectedUser}
+          onClose={handleCloseUserDetails}
+          onUpdate={handleUpdateUser}
+        />
+      )}
     </div>
   );
 }

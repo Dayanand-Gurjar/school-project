@@ -224,6 +224,38 @@ export const api = {
       return [];
     }
   },
+  updateUser: async (userId, userData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/auth/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(userData)
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return { success: false, error: 'Network error' };
+    }
+  },
+  deleteUser: async (userId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/auth/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return { success: false, error: 'Network error' };
+    }
+  },
   // Add endpoints for fetching from students and teachers tables
   getStudentsData: async () => {
     try {

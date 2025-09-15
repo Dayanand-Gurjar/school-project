@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { SCHOOL_NAME, API_BASE } from "../config/constants";
+import { SCHOOL_NAME, SCHOOL_CONTACT,API_BASE } from "../config/constants";
 import "./AcademicsPage.css";
 
 export default function AcademicsPage() {
@@ -164,6 +164,9 @@ export default function AcademicsPage() {
                     {teacher.subject && (
                       <p className="teacher-subject">{teacher.subject}</p>
                     )}
+                    {teacher.qualification && (
+                      <p className="teacher-qualification">🎓 {teacher.qualification}</p>
+                    )}
                     {teacher.phone && (
                       <p className="teacher-contact">📞 {teacher.phone}</p>
                     )}
@@ -187,15 +190,15 @@ export default function AcademicsPage() {
           <div className="info-cards">
             <div className="info-card">
               <h3>🕒 School Timings</h3>
-              <p><strong>Classes:</strong> 8:00 AM - 3:00 PM<br />
-              <strong>Break Time:</strong> 11:00 AM - 11:30 AM<br />
-              <strong>Lunch Time:</strong> 1:00 PM - 1:30 PM</p>
+              <p>
+              <strong>Summer:</strong> {SCHOOL_CONTACT.hours.summer}<br/>
+              <strong>Winter:</strong> {SCHOOL_CONTACT.hours.winter}</p>
+
             </div>
             <div className="info-card">
               <h3>📅 Academic Year</h3>
-              <p><strong>Session:</strong> April to March<br />
-              <strong>Summer Break:</strong> May - June<br />
-              <strong>Winter Break:</strong> December</p>
+              <p><strong>Session:</strong> July to May<br />
+              </p>
             </div>
           </div>
         </section>

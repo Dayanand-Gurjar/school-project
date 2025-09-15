@@ -5,13 +5,13 @@ export const getPublicTeachers = async (req, res) => {
     // Get approved teachers from teachers table with basic information for public display
     const { data: teachersFromTable, error: teachersError } = await supabase
       .from('teachers')
-      .select('id, name, subject, phone, email, profile_picture_url')
+      .select('id, name, subject, qualification, phone, email, profile_picture_url')
       .order('name', { ascending: true });
 
     // Get approved teachers from users table (using correct column names)
     const { data: teachersFromUsers, error: usersError } = await supabase
       .from('users')
-      .select('id, first_name, last_name, email, phone, profile_picture_url, subject')
+      .select('id, first_name, last_name, email, phone, profile_picture_url, subject, qualification')
       .eq('role', 'teacher')
       .eq('status', 'approved')
       .order('first_name', { ascending: true });
@@ -24,6 +24,7 @@ export const getPublicTeachers = async (req, res) => {
         id: t.id,
         name: t.name,
         subject: t.subject || '',
+        qualification: t.qualification || '',
         email: t.email || '',
         phone: t.phone || '',
         profile_picture: t.profile_picture_url || null
@@ -40,6 +41,7 @@ export const getPublicTeachers = async (req, res) => {
           id: u.id,
           name: `${u.first_name} ${u.last_name}`,
           subject: u.subject || '',
+          qualification: u.qualification || '',
           email: u.email,
           phone: u.phone || '',
           profile_picture: u.profile_picture_url || null

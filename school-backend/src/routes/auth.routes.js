@@ -6,7 +6,9 @@ import {
   getAllUsers,
   approveUser,
   rejectUser,
-  updateProfile
+  updateProfile,
+  updateUser,
+  deleteUser
 } from '../controllers/auth.controller.js';
 import { authenticateToken, requireAdmin } from '../middlewares/auth.middleware.js';
 import { uploadProfilePicture, handleUploadError } from '../services/upload.service.js';
@@ -23,6 +25,8 @@ router.put('/profile', authenticateToken, uploadProfilePicture, handleUploadErro
 
 // Admin only routes
 router.get('/users', authenticateToken, requireAdmin, getAllUsers);
+router.put('/users/:userId', authenticateToken, requireAdmin, uploadProfilePicture, handleUploadError, updateUser);
+router.delete('/users/:userId', authenticateToken, requireAdmin, deleteUser);
 router.put('/users/:userId/approve', authenticateToken, requireAdmin, approveUser);
 router.put('/users/:userId/reject', authenticateToken, requireAdmin, rejectUser);
 

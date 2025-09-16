@@ -6,7 +6,7 @@ export default function TeachersMessage() {
   
   const teacherMessages = [
     {
-      name: "Ms. Dinesh Kumar",
+      name: "Mr. Dinesh Kumar",
       role: "Teacher",
       image: "/assets/dineshsir.jpg",
       message: "Working with children who have faced trauma requires patience, understanding, and unconditional love. Every small breakthrough - a shy smile, a raised hand in class, or a moment of trust - reminds me why I chose this path. These children teach me resilience every day."
